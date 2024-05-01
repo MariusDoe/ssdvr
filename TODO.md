@@ -1,0 +1,8 @@
+- check selection theory
+- look for VR code editor
+- continue to use vite
+- no js frameworks (react / solid)
+- no hacking into home environment, instead stay in VR
+- hot reloading in VR (read/write + monaco editor)
+- import.meta.hot primitives
+- potentially use Apple keyboard passthrough
