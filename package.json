@@ -14,9 +14,11 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/view": "^6.26.3",
     "@types/three": "^0.163.0",
+    "codemirror": "^6.0.1",
     "html2canvas": "^1.4.1",
-    "monaco-editor": "^0.48.0",
     "three": "^0.163.0"
   }
 }
