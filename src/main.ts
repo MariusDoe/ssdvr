@@ -29,8 +29,6 @@ renderer.setAnimationLoop(() => {
 });
 document.body.appendChild(renderer.domElement);
 
-renderer.xr.getSession()?.domOverlayState;
-
 document.body.appendChild(VRButton.createButton(renderer));
 
 const lineGeometry = new THREE.BufferGeometry();
