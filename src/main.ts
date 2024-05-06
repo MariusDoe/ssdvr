@@ -226,3 +226,18 @@ const view = new EditorView({
   parent: document.body,
   extensions: [basicSetup, javascript({ typescript: true }), viewPlugin],
 });
+
+const oldRequestAnimationFrame = window.requestAnimationFrame;
+const oldCancelAnimationFrame = window.cancelAnimationFrame;
+renderer.xr.addEventListener("sessionstart", () => {
+  view.contentDOM.focus();
+  const session = renderer.xr.getSession()!;
+  window.requestAnimationFrame = (...args) =>
+    session.requestAnimationFrame(...args);
+  window.cancelAnimationFrame = (...args) =>
+    session.cancelAnimationFrame(...args);
+});
+renderer.xr.addEventListener("sessionend", () => {
+  window.requestAnimationFrame = oldRequestAnimationFrame;
+  window.cancelAnimationFrame = oldCancelAnimationFrame;
+});
