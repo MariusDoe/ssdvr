@@ -1,5 +1,5 @@
 import { javascript } from "@codemirror/lang-javascript";
-import { ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { ViewPlugin } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
 import * as THREE from "three";
 import { VRButton } from "three/addons/webxr/VRButton.js";
@@ -139,10 +139,8 @@ const viewPlugin = ViewPlugin.fromClass(
       });
     }
 
-    update(update: ViewUpdate) {
-      if (update.docChanged) {
-        this.requestRedraw();
-      }
+    update() {
+      this.requestRedraw();
     }
 
     redraw() {
@@ -166,6 +164,7 @@ const viewPlugin = ViewPlugin.fromClass(
         ) * glyphAdvance;
       const left = -2;
       const top = 2;
+      const zOrder = 0.00001;
       let x = left;
       let y = top;
       const z = -2;
@@ -199,7 +198,11 @@ const viewPlugin = ViewPlugin.fromClass(
         parentStyles.push(style);
         if (isLine) {
           const geometry = new THREE.PlaneGeometry(width, lineHeight);
-          geometry.translate(left + width / 2, y + lineHeight / 4, z - 0.0001);
+          geometry.translate(
+            left + width / 2,
+            y + lineHeight / 4,
+            z - 1 * zOrder
+          );
           const mesh = new THREE.Mesh(
             geometry,
             backgroundMaterialFromStyles(parentStyles)
@@ -215,6 +218,36 @@ const viewPlugin = ViewPlugin.fromClass(
         traverseElement(line, true);
         x = left;
         y -= lineHeight;
+      }
+      const { doc, selection } = this.view.state;
+      const selectionMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(0, 0.5, 1),
+        transparent: true,
+        opacity: 0.5,
+      });
+      const addSelection = (line: number, from: number, to: number) => {
+        const width = (to === from ? 0.1 : to - from) * glyphAdvance;
+        const geometry = new THREE.PlaneGeometry(width, lineHeight);
+        geometry.translate(
+          left + from * glyphAdvance + width / 2,
+          top - (line - 1) * lineHeight + lineHeight / 4,
+          z + 1 * zOrder
+        );
+        const mesh = new THREE.Mesh(geometry, selectionMaterial);
+        this.meshes.push(mesh);
+      };
+      for (const range of selection.ranges) {
+        const fromLine = doc.lineAt(range.from);
+        const toLine = doc.lineAt(range.to);
+        for (let line = fromLine.number; line <= toLine.number; line++) {
+          const from =
+            line === fromLine.number ? range.from - fromLine.from : 0;
+          const to =
+            line === toLine.number
+              ? range.to - toLine.from
+              : doc.line(line).length;
+          addSelection(line, from, to);
+        }
       }
       scene.add(...this.meshes);
     }
