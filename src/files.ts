@@ -1,4 +1,4 @@
-import type { ReadResponse } from "../plugins/files.ts";
+import type { ReadResponse } from "../plugins/files";
 
 const pendingReads = new Map<string, PromiseWithResolvers<string>>();
 if (import.meta.hot) {
