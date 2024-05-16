@@ -318,7 +318,7 @@ const babelPlugin = {
   },
 };
 
-export default function hmr(): Plugin {
+export function hmr(): Plugin {
   return {
     name: "hmr",
     async transform(originalCode, id) {

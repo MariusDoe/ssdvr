@@ -14,7 +14,7 @@ export type ReadResponse = {
     }
 );
 
-export default function files(): Plugin {
+export function files(): Plugin {
   return {
     name: "files",
     configureServer(server) {
