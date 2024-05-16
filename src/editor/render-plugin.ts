@@ -27,7 +27,7 @@ class RenderPlugin {
   y = 0;
   parentStyles: CSSStyleDeclaration[] = [];
 
-  static zOrder = 0.00001;
+  static zOrder = 0.001;
   static selectionMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(0, 0.5, 1),
     transparent: true,
