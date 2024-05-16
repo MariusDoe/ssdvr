@@ -1,4 +1,5 @@
 import "./controllers";
+import "./demo";
 import "./editor/editor";
 import { Editor } from "./editor/editor";
 import { preserve } from "./hmr/preserve";

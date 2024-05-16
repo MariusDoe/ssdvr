@@ -22,8 +22,8 @@ export class Editor extends THREE.EventDispatcher<EditorEventMap> {
         renderPlugin({
           size: 0.1,
           x: -2,
-          y: 2,
-          z: -2,
+          y: 10,
+          z: -10,
         }),
         keymap.of([
           {
