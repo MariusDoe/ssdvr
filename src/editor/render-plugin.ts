@@ -1,5 +1,6 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import * as THREE from "three";
+import { Font } from "three/examples/jsm/Addons.js";
 import { scene } from "../scene";
 import { fontFromStyle, fonts, measure } from "./fonts";
 import {
@@ -26,6 +27,8 @@ class RenderPlugin {
   x = 0;
   y = 0;
   parentStyles: CSSStyleDeclaration[] = [];
+
+  fontCharacterCache = new Map<Font, Map<string, THREE.BufferGeometry>>();
 
   static zOrder = 0.001;
   static selectionMaterial = new THREE.MeshBasicMaterial({
@@ -117,9 +120,19 @@ class RenderPlugin {
     this.drawText(textContent, style);
   }
 
-  drawText(text: string, style: CSSStyleDeclaration) {
-    const font = fontFromStyle(style);
-    const shapes = font.generateShapes(text, this.options.size);
+  getCharacterCache(font: Font) {
+    if (!this.fontCharacterCache.has(font)) {
+      this.fontCharacterCache.set(font, new Map());
+    }
+    return this.fontCharacterCache.get(font)!;
+  }
+
+  getCharacterGeometry(font: Font, character: string) {
+    const cache = this.getCharacterCache(font);
+    if (cache.has(character)) {
+      return cache.get(character)!;
+    }
+    const shapes = font.generateShapes(character, this.options.size);
     for (const shape of shapes) {
       // fixup shapes so triangulation doesn't break for weird holes arrays
       if (shape.holes.length === 1 && shape.holes[0].curves.length === 0) {
@@ -127,11 +140,20 @@ class RenderPlugin {
       }
     }
     const geometry = new THREE.ShapeGeometry(shapes);
-    geometry.translate(this.x, this.y, this.options.z);
+    cache.set(character, geometry);
+    return geometry;
+  }
+
+  drawText(text: string, style: CSSStyleDeclaration) {
+    const font = fontFromStyle(style);
     const material = foregroundMaterialFromStyle(style);
-    const mesh = new THREE.Mesh(geometry, material);
-    this.addMesh(mesh);
-    this.x += text.length * this.glyphAdvance;
+    for (let i = 0; i < text.length; i++) {
+      const geometry = this.getCharacterGeometry(font, text[i]);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(this.x, this.y, this.options.z);
+      this.addMesh(mesh);
+      this.x += this.glyphAdvance;
+    }
   }
 
   drawLineBackground() {
