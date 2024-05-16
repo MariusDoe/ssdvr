@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { tickAll } from "./tick";
 
 export const scene = new THREE.Scene();
 
@@ -13,6 +14,7 @@ export const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(() => {
+  tickAll(scene);
   renderer.render(scene, camera);
 });
 document.body.appendChild(renderer.domElement);
