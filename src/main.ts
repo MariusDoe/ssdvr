@@ -2,14 +2,20 @@ import "./controllers";
 import "./demo";
 import "./editor/editor";
 import { Editor } from "./editor/editor";
+import { read, write } from "./files";
 import { preserve } from "./hmr/preserve";
 import "./scene";
 import { renderer } from "./scene";
 import "./vr";
 
-preserve("editor", () => {
+preserve("editor", async () => {
   const editor = new Editor();
   renderer.xr.addEventListener("sessionstart", () => {
     editor.focus();
+  });
+  const path = "src/demo.ts";
+  editor.load(await read(path));
+  editor.addEventListener("save", () => {
+    write(path, editor.getDocument());
   });
 });
