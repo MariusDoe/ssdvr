@@ -1,3 +1,4 @@
+import "core-js/actual";
 import "./controllers";
 import "./demo";
 import "./editor/editor";
