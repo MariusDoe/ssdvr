@@ -1,11 +1,18 @@
 import { javascript } from "@codemirror/lang-javascript";
+import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
+import * as THREE from "three";
 import { renderPlugin } from "./render-plugin";
 
-export class Editor {
+interface EditorEventMap {
+  save: {};
+}
+
+export class Editor extends THREE.EventDispatcher<EditorEventMap> {
   view: EditorView;
 
   constructor(initialDocument = "") {
+    super();
     this.view = new EditorView({
       doc: initialDocument,
       parent: document.body,
@@ -18,6 +25,15 @@ export class Editor {
           y: 2,
           z: -2,
         }),
+        keymap.of([
+          {
+            key: "Ctrl-s",
+            run: () => {
+              this.dispatchEvent({ type: "save" });
+              return true;
+            },
+          },
+        ]),
       ],
     });
   }
