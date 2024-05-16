@@ -1,6 +1,5 @@
 import { javascript } from "@codemirror/lang-javascript";
 import { EditorView, basicSetup } from "codemirror";
-import { registerKeepAliveClass } from "../hmr/keep-alive";
 import { renderPlugin } from "./render-plugin";
 
 export class Editor {
@@ -43,4 +42,3 @@ export class Editor {
     return this.view.state.doc.toString();
   }
 }
-registerKeepAliveClass(Editor);

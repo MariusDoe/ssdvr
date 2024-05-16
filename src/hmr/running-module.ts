@@ -1,18 +1,6 @@
-import { ModuleNamespace } from "vite/types/hot.js";
-
 export type Module = ImportMeta;
 
 const runningModules: Module[] = [];
-
-const moduleNamespaceToModuleMap =
-  import.meta.hot?.data.moduleNamespaceToModule ??
-  new WeakMap<ModuleNamespace, Module>();
-if (import.meta.hot) {
-  import.meta.hot.data.moduleNamespaceToModule = moduleNamespaceToModuleMap;
-}
-
-export const moduleNamespaceToModule = (moduleNamespace: ModuleNamespace) =>
-  moduleNamespaceToModuleMap.get(moduleNamespace);
 
 export const pushRunningModule = (module: Module) => {
   runningModules.push(module);
@@ -23,9 +11,6 @@ export const popRunningModule = () => {
   if (!module) {
     return;
   }
-  import(module.url).then((namespace) =>
-    moduleNamespaceToModuleMap.set(namespace, module)
-  );
 };
 
 export const runningModule = () => runningModules[runningModules.length - 1];
