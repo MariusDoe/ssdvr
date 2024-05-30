@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Color } from "three";
 import { materialFromColor } from "../materials";
 
 export const foregroundMaterialFromStyle = (style: CSSStyleDeclaration) =>
@@ -19,7 +19,7 @@ export const backgroundMaterialFromStyles = (styles: CSSStyleDeclaration[]) =>
       .map(
         (style) =>
           [
-            new THREE.Color(style.backgroundColor),
+            new Color(style.backgroundColor),
             colorAlpha(style.backgroundColor),
           ] as const
       )

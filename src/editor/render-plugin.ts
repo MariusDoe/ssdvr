@@ -1,5 +1,12 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import * as THREE from "three";
+import {
+  BufferGeometry,
+  Color,
+  Mesh,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  ShapeGeometry,
+} from "three";
 import { Font } from "three/examples/jsm/Addons.js";
 import { scene } from "../scene";
 import { fontFromStyle, fonts, measure } from "./fonts";
@@ -18,7 +25,7 @@ interface Options {
 class RenderPlugin {
   view: EditorView;
   options: Options;
-  meshes: THREE.Mesh[] = [];
+  meshes: Mesh[] = [];
   // font constants
   lineHeight: number;
   glyphAdvance: number;
@@ -28,11 +35,11 @@ class RenderPlugin {
   y = 0;
   parentStyles: CSSStyleDeclaration[] = [];
 
-  fontCharacterCache = new Map<Font, Map<string, THREE.BufferGeometry>>();
+  fontCharacterCache = new Map<Font, Map<string, BufferGeometry>>();
 
   static zOrder = 0.001;
-  static selectionMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0, 0.5, 1),
+  static selectionMaterial = new MeshBasicMaterial({
+    color: new Color(0, 0.5, 1),
     transparent: true,
     opacity: 0.5,
   });
@@ -63,7 +70,7 @@ class RenderPlugin {
     this.meshes.splice(0);
   }
 
-  addMesh(mesh: THREE.Mesh) {
+  addMesh(mesh: Mesh) {
     scene.add(mesh);
     this.meshes.push(mesh);
   }
@@ -139,7 +146,7 @@ class RenderPlugin {
         shape.holes = [];
       }
     }
-    const geometry = new THREE.ShapeGeometry(shapes);
+    const geometry = new ShapeGeometry(shapes);
     cache.set(character, geometry);
     return geometry;
   }
@@ -149,7 +156,7 @@ class RenderPlugin {
     const material = foregroundMaterialFromStyle(style);
     for (let i = 0; i < text.length; i++) {
       const geometry = this.getCharacterGeometry(font, text[i]);
-      const mesh = new THREE.Mesh(geometry, material);
+      const mesh = new Mesh(geometry, material);
       mesh.position.set(this.x, this.y, this.options.z);
       this.addMesh(mesh);
       this.x += this.glyphAdvance;
@@ -157,13 +164,13 @@ class RenderPlugin {
   }
 
   drawLineBackground() {
-    const geometry = new THREE.PlaneGeometry(this.width, this.lineHeight);
+    const geometry = new PlaneGeometry(this.width, this.lineHeight);
     geometry.translate(
       this.options.x + this.width / 2,
       this.y + this.lineHeight / 4,
       this.options.z - 1 * RenderPlugin.zOrder
     );
-    const mesh = new THREE.Mesh(
+    const mesh = new Mesh(
       geometry,
       backgroundMaterialFromStyles(this.parentStyles)
     );
@@ -188,13 +195,13 @@ class RenderPlugin {
 
   drawSelection(line: number, from: number, to: number) {
     const width = (to === from ? 0.1 : to - from) * this.glyphAdvance;
-    const geometry = new THREE.PlaneGeometry(width, this.lineHeight);
+    const geometry = new PlaneGeometry(width, this.lineHeight);
     geometry.translate(
       this.options.x + from * this.glyphAdvance + width / 2,
       this.options.y - (line - 1) * this.lineHeight + this.lineHeight / 4,
       this.options.z + 1 * RenderPlugin.zOrder
     );
-    const mesh = new THREE.Mesh(geometry, RenderPlugin.selectionMaterial);
+    const mesh = new Mesh(geometry, RenderPlugin.selectionMaterial);
     this.addMesh(mesh);
   }
 }

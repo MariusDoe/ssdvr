@@ -1,14 +1,14 @@
 import { javascript } from "@codemirror/lang-javascript";
 import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
-import * as THREE from "three";
+import { EventDispatcher } from "three";
 import { renderPlugin } from "./render-plugin";
 
 interface EditorEventMap {
   save: {};
 }
 
-export class Editor extends THREE.EventDispatcher<EditorEventMap> {
+export class Editor extends EventDispatcher<EditorEventMap> {
   view: EditorView;
 
   constructor(initialDocument = "") {

@@ -1,9 +1,15 @@
-import * as THREE from "three";
+import {
+  Color,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  SphereGeometry,
+} from "three";
 import { preserve } from "./hmr/preserve";
 import { scene } from "./scene";
 import { TickContext } from "./tick";
 
-class SolarSystem extends THREE.Object3D {
+class SolarSystem extends Object3D {
   constructor() {
     super();
     const sun = new Body();
@@ -14,12 +20,12 @@ class SolarSystem extends THREE.Object3D {
   }
 }
 
-class Body extends THREE.Mesh {
+class Body extends Mesh {
   constructor() {
     super(
-      new THREE.SphereGeometry(),
-      new THREE.MeshBasicMaterial({
-        color: new THREE.Color(1, 0, 0),
+      new SphereGeometry(),
+      new MeshBasicMaterial({
+        color: new Color(1, 0, 0),
       })
     );
   }

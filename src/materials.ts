@@ -1,8 +1,8 @@
-import * as THREE from "three";
+import { Material, MeshBasicMaterial } from "three";
 
-const materials: Record<string, THREE.Material> = {};
+const materials: Record<string, Material> = {};
 
 export const materialFromColor = (color: string) =>
-  (materials[color] ??= new THREE.MeshBasicMaterial({
+  (materials[color] ??= new MeshBasicMaterial({
     color: color,
   }));

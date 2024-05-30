@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Clock, Object3D } from "three";
 
 export type TickContext = {
   delta: number;
@@ -14,9 +14,9 @@ declare module "three" {
   }
 }
 
-const clock = new THREE.Clock();
+const clock = new Clock();
 
-export const tickAll = (scene: THREE.Object3D) => {
+export const tickAll = (scene: Object3D) => {
   const context = {
     delta: clock.getDelta(),
   };

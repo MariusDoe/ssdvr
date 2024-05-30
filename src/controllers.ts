@@ -1,12 +1,9 @@
-import * as THREE from "three";
+import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from "three";
 import { XRControllerModelFactory } from "three/examples/jsm/Addons.js";
 import { renderer, scene } from "./scene";
 
-const lineGeometry = new THREE.BufferGeometry();
-lineGeometry.setFromPoints([
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -5),
-]);
+const lineGeometry = new BufferGeometry();
+lineGeometry.setFromPoints([new Vector3(0, 0, 0), new Vector3(0, 0, -5)]);
 
 const controllerIndices = [0, 1];
 const controllers = controllerIndices.map((index) =>
@@ -14,9 +11,9 @@ const controllers = controllerIndices.map((index) =>
 );
 for (const controller of controllers) {
   controller.add(
-    new THREE.Line(
+    new Line(
       lineGeometry,
-      new THREE.LineBasicMaterial({
+      new LineBasicMaterial({
         color: "red",
       })
     )
