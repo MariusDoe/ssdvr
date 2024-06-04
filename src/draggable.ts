@@ -1,4 +1,5 @@
 import { Object3D, Vector3 } from "three";
+import { Controller } from "./controllers";
 import { onController } from "./interaction";
 
 export type DraggableContext = {
@@ -12,19 +13,21 @@ export const createDraggable = (
 ) => {
   let worldLast: Vector3 | null = null;
   let distance = 0;
+  let selectingController: Controller;
   onController(
     "selectstart",
     { mode: "object", object, recurse: true },
-    ({ intersection }) => {
+    ({ intersection, controller }) => {
       worldLast = intersection.point;
       distance = intersection.distance;
+      selectingController = controller;
     }
   );
   onController("selectend", { mode: "whileInScene", object }, () => {
     worldLast = null;
   });
   onController("move", { mode: "whileInScene", object }, ({ controller }) => {
-    if (!worldLast) {
+    if (!worldLast || selectingController !== controller) {
       return;
     }
     const worldCurrent = controller.hand.localToWorld(
