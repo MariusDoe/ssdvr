@@ -51,8 +51,9 @@ export class Movable extends Object3D {
     this.handle.position.copy(this.worldToLocal(worldPosition));
   }
 
-  onDrag({ localOffsetIn }: DraggableContext) {
+  onDrag({ localOffsetIn, worldOffset }: DraggableContext) {
     this.position.add(localOffsetIn(this));
+    this.boundingBox.translate(worldOffset);
   }
 }
 
