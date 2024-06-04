@@ -20,10 +20,10 @@ export class Editor extends EventDispatcher<EditorEventMap> {
         basicSetup,
         javascript({ typescript: true }),
         renderPlugin({
-          size: 0.1,
-          x: -2,
-          y: 10,
-          z: -10,
+          size: 0.01,
+          x: -0.2,
+          y: 1,
+          z: -0.5,
         }),
         keymap.of([
           {
