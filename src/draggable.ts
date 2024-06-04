@@ -4,7 +4,8 @@ import { onController } from "./interaction";
 
 export type DraggableContext = {
   worldOffset: Vector3;
-  localOffset: Vector3;
+  localOffset(): Vector3;
+  localOffsetIn(referenceObject: Object3D): Vector3;
 };
 
 export const createDraggable = (
@@ -36,17 +37,15 @@ export const createDraggable = (
     const worldOffset = worldCurrent.clone().sub(worldLast);
     const savedWorldLast = worldLast;
     worldLast = worldCurrent;
-    const localOffset = () => {
-      const localLast = object.worldToLocal(savedWorldLast.clone());
-      const localCurrent = object.worldToLocal(worldCurrent.clone());
+    const localOffsetIn = (referenceObject: Object3D) => {
+      const localLast = referenceObject.worldToLocal(savedWorldLast.clone());
+      const localCurrent = referenceObject.worldToLocal(worldCurrent.clone());
       return localCurrent.sub(localLast);
     };
-    let _localOffset: Vector3 | null = null;
     onDrag({
       worldOffset,
-      get localOffset() {
-        return (_localOffset ??= localOffset());
-      },
+      localOffset: () => localOffsetIn(object),
+      localOffsetIn,
     });
   });
 };
