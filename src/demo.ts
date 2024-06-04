@@ -6,6 +6,7 @@ import {
   SphereGeometry,
 } from "three";
 import { preserve } from "./hmr/preserve";
+import { openInMovable } from "./movable";
 import { scene } from "./scene";
 import { TickContext } from "./tick";
 
@@ -60,8 +61,7 @@ class Planet extends Body {
 
 preserve("solarSystem", () => {
   const solarSystem = new SolarSystem();
-  solarSystem.position.set(0, 0, -5);
-  scene.add(solarSystem);
+  openInMovable(solarSystem).position.set(0, 0, -5);
   (window as any).solarSystem = solarSystem;
   (window as any).scene = scene;
   return solarSystem;
