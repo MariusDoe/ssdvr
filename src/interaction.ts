@@ -108,10 +108,16 @@ export const onController = <
   Mode extends InteractionListenerMode,
   Event extends InteractionEvent
 >(
-  event: Event,
+  event: Event | Event[],
   options: InteractionOptions<Mode>,
   handler: InteractionHandler<NoInfer<Mode>, Event>
 ) => {
+  if (event instanceof Array) {
+    for (const single of event) {
+      onController(single, options, handler);
+    }
+    return;
+  }
   const listener = {
     event,
     handler,
