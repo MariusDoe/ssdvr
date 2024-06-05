@@ -1,5 +1,6 @@
 import { Intersection, Object3D, Raycaster } from "three";
 import { Controller, controllers } from "./controllers";
+import { isAncestor } from "./utils";
 
 export type InteractionListenerModes = {
   object: {
@@ -7,14 +8,28 @@ export type InteractionListenerModes = {
       object: Object3D;
     } & ObjectInteractionOptions;
     context: {
-      intersection: Intersection;
+      [Event in InteractionEvent]: {
+        object: Object3D;
+      } & (Event extends ControllerEvent
+        ? {
+            intersection: Intersection;
+          }
+        : Event extends HoverEvent
+        ? {
+            entered: Controller[];
+            exited: Controller[];
+            active: Controller[];
+          }
+        : {});
     };
   };
   whileInScene: {
     options: {
       object: Object3D;
     };
-    context: {};
+    context: {
+      [Event in InteractionEvent]: {};
+    };
   };
 };
 
@@ -28,7 +43,7 @@ export type ObjectInteractionOptions = {
   recurse: boolean;
 };
 
-const interactionEvents = [
+const controllerEvents = [
   "move",
   "selectstart",
   "select",
@@ -38,28 +53,47 @@ const interactionEvents = [
   "squeezeend",
 ] as const;
 
+const hoverEvents = ["enter", "exit"] as const;
+
+const interactionEvents = [...controllerEvents, ...hoverEvents];
+
+export type ControllerEvent = (typeof controllerEvents)[number];
+
+export type HoverEvent = (typeof hoverEvents)[number];
+
 export type InteractionEvent = (typeof interactionEvents)[number];
 
-export type InteractionContext<Mode extends InteractionListenerMode> = {
+export type InteractionContext<
+  Mode extends InteractionListenerMode,
+  Event extends InteractionEvent
+> = {
   event: InteractionEvent;
   controller: Controller;
-} & InteractionListenerModes[Mode]["context"];
+} & InteractionListenerModes[Mode]["context"][Event];
 
-export type InteractionHandler<Mode extends InteractionListenerMode> = (
-  context: InteractionContext<Mode>
-) => void;
+export type InteractionHandler<
+  Mode extends InteractionListenerMode,
+  Event extends InteractionEvent
+> = (context: InteractionContext<Mode, Event>) => void;
 
-export type Listener<Mode extends InteractionListenerMode> = {
-  handler: InteractionHandler<Mode>;
+export type Listener<
+  Mode extends InteractionListenerMode,
+  Event extends InteractionEvent
+> = {
+  event: Event;
+  handler: InteractionHandler<Mode, Event>;
   options: InteractionOptions<Mode>;
 };
 
 const listeners = Object.fromEntries(
   interactionEvents.map((event) => [
     event,
-    [] as Listener<InteractionListenerMode>[],
+    [] as Listener<InteractionListenerMode, InteractionEvent>[],
   ])
-) as Record<InteractionEvent, Listener<InteractionListenerMode>[]>;
+) as Record<
+  InteractionEvent,
+  Listener<InteractionListenerMode, InteractionEvent>[]
+>;
 
 const objects = new Map<Object3D, ObjectInteractionOptions>();
 
@@ -70,15 +104,22 @@ const mergeObjectOptions = (
   recurse: a.recurse || (b?.recurse ?? false),
 });
 
-export const onController = <Mode extends InteractionListenerMode>(
-  event: InteractionEvent,
+export const onController = <
+  Mode extends InteractionListenerMode,
+  Event extends InteractionEvent
+>(
+  event: Event,
   options: InteractionOptions<Mode>,
-  handler: InteractionHandler<NoInfer<Mode>>
+  handler: InteractionHandler<NoInfer<Mode>, Event>
 ) => {
   const listener = {
+    event,
     handler,
     options,
-  } satisfies Listener<Mode> as unknown as Listener<InteractionListenerMode>;
+  } satisfies Listener<Mode, Event> as unknown as Listener<
+    InteractionListenerMode,
+    InteractionEvent
+  >;
   listeners[event].push(listener);
   let witness: Object3D;
   if ("recurse" in listener.options) {
@@ -100,6 +141,25 @@ export const onController = <Mode extends InteractionListenerMode>(
 
 const raycaster = new Raycaster();
 
+const hoveredObjects = new Map<Controller, Object3D>();
+
+const dispatchObjectEvent = <Event extends InteractionEvent>(
+  object: Object3D,
+  objectEventListeners: Listener<"object", Event>[],
+  context: InteractionContext<"object", Event>
+) => {
+  for (const listener of objectEventListeners) {
+    if (
+      listener.event === context.event &&
+      (listener.options.object === object ||
+        (listener.options.recurse &&
+          isAncestor(listener.options.object, object)))
+    ) {
+      listener.handler(context);
+    }
+  }
+};
+
 for (const controller of controllers) {
   const { hand } = controller;
 
@@ -115,10 +175,16 @@ for (const controller of controllers) {
       }
     }
 
+    const hoverEventListeners = hoverEvents
+      .flatMap((hoverEvent) => listeners[hoverEvent])
+      .filter((listener) => listener.options.mode === "object") as Listener<
+      "object",
+      HoverEvent
+    >[];
     const objectEventListeners = eventListeners.filter(
       (listener) => listener.options.mode === "object"
-    ) as Listener<"object">[];
-    if (objectEventListeners.length === 0) {
+    ) as Listener<"object", InteractionEvent>[];
+    if (objectEventListeners.length === 0 && hoverEventListeners.length === 0) {
       return;
     }
 
@@ -135,23 +201,53 @@ for (const controller of controllers) {
     const firstHit = raycasts.find(
       ({ intersections }) => intersections[0].distance === minDistance
     );
-    if (!firstHit) {
-      return;
-    }
 
-    const { object, intersections } = firstHit;
-    for (const listener of objectEventListeners) {
-      if (listener.options.object === object) {
-        listener.handler({
-          event,
+    const oldHoveredObject = hoveredObjects.get(controller);
+    const newHoveredObject = firstHit?.object;
+    if (newHoveredObject) {
+      hoveredObjects.set(controller, newHoveredObject);
+    } else {
+      hoveredObjects.delete(controller);
+    }
+    if (newHoveredObject !== oldHoveredObject) {
+      const active = (hoveredObject: Object3D) =>
+        Array.from(hoveredObjects.entries())
+          .filter(([_, object]) => object === hoveredObject)
+          .map(([controller, _]) => controller);
+      if (oldHoveredObject) {
+        dispatchObjectEvent(oldHoveredObject, hoverEventListeners, {
+          event: "exit",
+          object: oldHoveredObject,
           controller,
-          intersection: intersections[0],
+          entered: [],
+          exited: [controller],
+          active: active(oldHoveredObject),
+        });
+      }
+      if (newHoveredObject) {
+        dispatchObjectEvent(newHoveredObject, hoverEventListeners, {
+          event: "enter",
+          object: newHoveredObject,
+          controller,
+          entered: [controller],
+          exited: [],
+          active: active(newHoveredObject),
         });
       }
     }
+
+    if (firstHit) {
+      const { object, intersections } = firstHit;
+      dispatchObjectEvent(object, objectEventListeners, {
+        event,
+        object,
+        controller,
+        intersection: intersections[0],
+      });
+    }
   };
 
-  for (const event of interactionEvents) {
+  for (const event of controllerEvents) {
     hand.addEventListener(event, () => {
       fireEvent(event);
     });
