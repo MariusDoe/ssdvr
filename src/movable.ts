@@ -7,27 +7,63 @@ import {
   Object3D,
   Vector3,
 } from "three";
-import { DraggableContext, createDraggable } from "./draggable";
+import { DragContext, createDraggable } from "./draggable";
+import { onController } from "./interaction";
 import { scene } from "./scene";
 
 const handleMesh = new CapsuleGeometry(0.1, 2);
 const handleMaterial = new MeshBasicMaterial({
   color: new Color("white"),
 });
+const handleHoverMaterial = new MeshBasicMaterial({
+  color: new Color("lightblue"),
+});
 
 export class Movable extends Object3D {
   boundingBox: Box3;
-  handle: Mesh;
+  handle!: Mesh;
 
   constructor() {
     super();
+    this.initialiseHandle();
+    this.boundingBox = new Box3();
+  }
+
+  initialiseHandle() {
     this.handle = new Mesh(handleMesh, handleMaterial);
     this.handle.rotateZ(Math.PI / 2);
     this.add(this.handle);
-    createDraggable(this.handle, (context) => {
-      this.onDrag(context);
+    let dragging = false;
+    let hovered = false;
+    const updateMaterial = () => {
+      this.handle.material =
+        dragging || hovered ? handleHoverMaterial : handleMaterial;
+    };
+    createDraggable(this.handle, {
+      onDrag: (context) => {
+        this.onDrag(context);
+      },
+      onDragStart() {
+        dragging = true;
+        updateMaterial();
+      },
+      onDragEnd() {
+        dragging = false;
+        updateMaterial();
+      },
     });
-    this.boundingBox = new Box3();
+    onController(
+      ["enter", "exit"],
+      {
+        mode: "object",
+        object: this.handle,
+        recurse: true,
+      },
+      ({ active }) => {
+        hovered = active.length > 0;
+        updateMaterial();
+      }
+    );
   }
 
   updateBoundingBox() {
@@ -55,7 +91,7 @@ export class Movable extends Object3D {
     this.handle.position.copy(this.worldToLocal(worldPosition));
   }
 
-  onDrag({ localOffsetIn }: DraggableContext) {
+  onDrag({ localOffsetIn }: DragContext) {
     this.position.add(localOffsetIn(this));
   }
 }
