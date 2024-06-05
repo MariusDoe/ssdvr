@@ -31,12 +31,15 @@ export class Movable extends Object3D {
   }
 
   updateBoundingBox() {
+    const worldPosition = this.getWorldPosition(new Vector3());
+    this.boundingBox.translate(worldPosition);
     for (const child of this.children) {
       if (child === this.handle) {
         continue;
       }
       this.boundingBox.expandByObject(child);
     }
+    this.boundingBox.translate(worldPosition.negate());
   }
 
   tick() {
@@ -47,13 +50,13 @@ export class Movable extends Object3D {
     }
     const worldPosition = this.boundingBox
       .getCenter(new Vector3())
-      .setY(this.boundingBox.min.y);
+      .setY(this.boundingBox.min.y)
+      .add(this.getWorldPosition(new Vector3()));
     this.handle.position.copy(this.worldToLocal(worldPosition));
   }
 
-  onDrag({ localOffsetIn, worldOffset }: DraggableContext) {
+  onDrag({ localOffsetIn }: DraggableContext) {
     this.position.add(localOffsetIn(this));
-    this.boundingBox.translate(worldOffset);
   }
 }
 
