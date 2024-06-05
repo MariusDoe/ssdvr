@@ -1,14 +1,14 @@
 import { javascript } from "@codemirror/lang-javascript";
 import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
-import { EventDispatcher } from "three";
+import { Object3D, Object3DEventMap } from "three";
 import { renderPlugin } from "./render-plugin";
 
-interface EditorEventMap {
+interface EditorEventMap extends Object3DEventMap {
   save: {};
 }
 
-export class Editor extends EventDispatcher<EditorEventMap> {
+export class Editor extends Object3D<EditorEventMap> {
   view: EditorView;
 
   constructor(initialDocument = "") {
@@ -19,12 +19,12 @@ export class Editor extends EventDispatcher<EditorEventMap> {
       extensions: [
         basicSetup,
         javascript({ typescript: true }),
-        renderPlugin({
-          size: 0.01,
-          x: -0.2,
-          y: 1,
-          z: -0.5,
-        }),
+        renderPlugin(
+          {
+            size: 0.01,
+          },
+          this
+        ),
         keymap.of([
           {
             key: "Ctrl-s",

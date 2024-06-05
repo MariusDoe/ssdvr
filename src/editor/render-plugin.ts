@@ -4,11 +4,11 @@ import {
   Color,
   Mesh,
   MeshBasicMaterial,
+  Object3D,
   PlaneGeometry,
   ShapeGeometry,
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
-import { scene } from "../scene";
 import { fontFromStyle, fonts, measure } from "./fonts";
 import {
   backgroundMaterialFromStyles,
@@ -17,15 +17,11 @@ import {
 
 interface Options {
   size: number;
-  x: number;
-  y: number;
-  z: number;
 }
 
-class RenderPlugin {
+class RenderPlugin extends Object3D {
   view: EditorView;
   options: Options;
-  meshes: Mesh[] = [];
   // font constants
   lineHeight: number;
   glyphAdvance: number;
@@ -45,6 +41,7 @@ class RenderPlugin {
   });
 
   constructor(view: EditorView, options: Options) {
+    super();
     this.view = view;
     this.options = options;
     const { lineHeight, glyphAdvance } = measure(fonts[0], this.options.size);
@@ -65,18 +62,8 @@ class RenderPlugin {
     });
   }
 
-  removeMeshes() {
-    scene.remove(...this.meshes);
-    this.meshes.splice(0);
-  }
-
-  addMesh(mesh: Mesh) {
-    scene.add(mesh);
-    this.meshes.push(mesh);
-  }
-
   redraw() {
-    this.removeMeshes();
+    this.remove(...this.children);
     this.draw();
   }
 
@@ -93,12 +80,12 @@ class RenderPlugin {
         0,
         ...Array.from(lines).map((line) => (line.textContent ?? "").length)
       ) * this.glyphAdvance;
-    this.x = this.options.x;
-    this.y = this.options.y;
+    this.x = 0;
+    this.y = 0;
     this.parentStyles = [];
     for (const line of lines) {
       this.traverseElement(line, true);
-      this.x = this.options.x;
+      this.x = 0;
       this.y -= this.lineHeight;
     }
   }
@@ -157,8 +144,8 @@ class RenderPlugin {
     for (let i = 0; i < text.length; i++) {
       const geometry = this.getCharacterGeometry(font, text[i]);
       const mesh = new Mesh(geometry, material);
-      mesh.position.set(this.x, this.y, this.options.z);
-      this.addMesh(mesh);
+      mesh.position.set(this.x, this.y, 0);
+      this.add(mesh);
       this.x += this.glyphAdvance;
     }
   }
@@ -166,15 +153,15 @@ class RenderPlugin {
   drawLineBackground() {
     const geometry = new PlaneGeometry(this.width, this.lineHeight);
     geometry.translate(
-      this.options.x + this.width / 2,
+      this.width / 2,
       this.y + this.lineHeight / 4,
-      this.options.z - 1 * RenderPlugin.zOrder
+      -RenderPlugin.zOrder
     );
     const mesh = new Mesh(
       geometry,
       backgroundMaterialFromStyles(this.parentStyles)
     );
-    this.addMesh(mesh);
+    this.add(mesh);
   }
 
   drawSelections() {
@@ -197,14 +184,18 @@ class RenderPlugin {
     const width = (to === from ? 0.1 : to - from) * this.glyphAdvance;
     const geometry = new PlaneGeometry(width, this.lineHeight);
     geometry.translate(
-      this.options.x + from * this.glyphAdvance + width / 2,
-      this.options.y - (line - 1) * this.lineHeight + this.lineHeight / 4,
-      this.options.z + 1 * RenderPlugin.zOrder
+      from * this.glyphAdvance + width / 2,
+      (5 / 4 - line) * this.lineHeight,
+      RenderPlugin.zOrder
     );
     const mesh = new Mesh(geometry, RenderPlugin.selectionMaterial);
-    this.addMesh(mesh);
+    this.add(mesh);
   }
 }
 
-export const renderPlugin = (options: Options) =>
-  ViewPlugin.define((view) => new RenderPlugin(view, options));
+export const renderPlugin = (options: Options, parent: Object3D) =>
+  ViewPlugin.define((view) => {
+    const plugin = new RenderPlugin(view, options);
+    parent.add(plugin);
+    return plugin;
+  });
