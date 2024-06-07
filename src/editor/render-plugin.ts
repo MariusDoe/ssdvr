@@ -1,5 +1,6 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Color, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
+import { onController } from "../interaction";
 import { fontFromStyle, fonts, getCharacterMesh, measure } from "./fonts";
 import {
   backgroundMaterialFromStyles,
@@ -37,10 +38,26 @@ class RenderPlugin extends Object3D {
     this.lineHeight = lineHeight;
     this.glyphAdvance = glyphAdvance;
     this.requestRedraw();
+    onController(
+      "select",
+      { mode: "object", object: this, recurse: true },
+      () => {
+        this.onClick();
+      }
+    );
+    this.focus();
   }
 
   update() {
     this.requestRedraw();
+  }
+
+  onClick() {
+    this.focus();
+  }
+
+  focus() {
+    this.view.contentDOM.focus();
   }
 
   requestRedraw() {

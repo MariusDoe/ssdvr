@@ -38,10 +38,6 @@ export class Editor extends Object3D<EditorEventMap> {
     });
   }
 
-  focus() {
-    this.view.contentDOM.focus();
-  }
-
   load(document: string) {
     this.view.dispatch({
       changes: [
