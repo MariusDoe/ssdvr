@@ -1,15 +1,6 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import {
-  BufferGeometry,
-  Color,
-  Mesh,
-  MeshBasicMaterial,
-  Object3D,
-  PlaneGeometry,
-  ShapeGeometry,
-} from "three";
-import { Font } from "three/examples/jsm/Addons.js";
-import { fontFromStyle, fonts, measure } from "./fonts";
+import { Color, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
+import { fontFromStyle, fonts, getCharacterMesh, measure } from "./fonts";
 import {
   backgroundMaterialFromStyles,
   foregroundMaterialFromStyle,
@@ -30,8 +21,6 @@ class RenderPlugin extends Object3D {
   x = 0;
   y = 0;
   parentStyles: CSSStyleDeclaration[] = [];
-
-  fontCharacterCache = new Map<Font, Map<string, BufferGeometry>>();
 
   static zOrder = 0.001;
   static selectionMaterial = new MeshBasicMaterial({
@@ -114,36 +103,11 @@ class RenderPlugin extends Object3D {
     this.drawText(textContent, style);
   }
 
-  getCharacterCache(font: Font) {
-    if (!this.fontCharacterCache.has(font)) {
-      this.fontCharacterCache.set(font, new Map());
-    }
-    return this.fontCharacterCache.get(font)!;
-  }
-
-  getCharacterGeometry(font: Font, character: string) {
-    const cache = this.getCharacterCache(font);
-    if (cache.has(character)) {
-      return cache.get(character)!;
-    }
-    const shapes = font.generateShapes(character, this.options.size);
-    for (const shape of shapes) {
-      // fixup shapes so triangulation doesn't break for weird holes arrays
-      if (shape.holes.length === 1 && shape.holes[0].curves.length === 0) {
-        shape.holes = [];
-      }
-    }
-    const geometry = new ShapeGeometry(shapes);
-    cache.set(character, geometry);
-    return geometry;
-  }
-
   drawText(text: string, style: CSSStyleDeclaration) {
     const font = fontFromStyle(style);
     const material = foregroundMaterialFromStyle(style);
     for (let i = 0; i < text.length; i++) {
-      const geometry = this.getCharacterGeometry(font, text[i]);
-      const mesh = new Mesh(geometry, material);
+      const mesh = getCharacterMesh(font, text[i], material, this.options.size);
       mesh.position.set(this.x, this.y, 0);
       this.add(mesh);
       this.x += this.glyphAdvance;
