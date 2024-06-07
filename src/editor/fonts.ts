@@ -1,3 +1,4 @@
+import { BufferGeometry, Material, Mesh, ShapeGeometry } from "three";
 import { Font, FontLoader } from "three/examples/jsm/Addons.js";
 import consolasBoldItalicUrl from "../../fonts/Consolas_Bold Italic.json?url";
 import consolasBoldUrl from "../../fonts/Consolas_Bold.json?url";
@@ -12,11 +13,19 @@ export const fonts = await Promise.all(
   )
 );
 
-export const fontFromFlags = (bold: boolean, italic: boolean) =>
-  fonts[(+italic << 1) | +bold];
+export const fontFromFlags = ({
+  bold,
+  italic,
+}: {
+  bold: boolean;
+  italic: boolean;
+}) => fonts[(+italic << 1) | +bold];
 
 export const fontFromStyle = (style: CSSStyleDeclaration) =>
-  fontFromFlags(parseInt(style.fontWeight) > 400, style.fontStyle === "italic");
+  fontFromFlags({
+    bold: parseInt(style.fontWeight) > 400,
+    italic: style.fontStyle === "italic",
+  });
 
 export const measure = (font: Font, size = 1) => {
   const { data } = font;
