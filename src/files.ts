@@ -1,34 +1,52 @@
-import type { ReadResponse } from "../plugins/files";
+import type {
+  MessageData,
+  OkResponse,
+  RequestName,
+  Response,
+} from "../plugins/files";
 
-const pendingReads = new Map<string, PromiseWithResolvers<string>>();
-if (import.meta.hot) {
-  import.meta.hot.on("files:read", (data: ReadResponse) => {
-    const pendingLoad = pendingReads.get(data.path);
-    if (!pendingLoad) {
-      return;
-    }
-    if (data.ok) {
-      pendingLoad.resolve(data.contents);
-    } else {
-      pendingLoad.reject(data.error);
-    }
-    pendingReads.delete(data.path);
-  });
+const pendingRequests = new Map<
+  string,
+  PromiseWithResolvers<OkResponse<RequestName>>
+>();
+const requestNames = ["files:read", "files:list"] as const;
+
+for (const name of requestNames) {
+  if (import.meta.hot) {
+    import.meta.hot.on(name, (data: Response<RequestName>) => {
+      const pendingRequest = pendingRequests.get(data.id);
+      if (!pendingRequest) {
+        return;
+      }
+      if (data.ok) {
+        pendingRequest.resolve(data);
+      } else {
+        pendingRequest.reject(data.error);
+      }
+      pendingRequests.delete(data.id);
+    });
+  }
 }
 
-export const read = (path: string) => {
+const request = <Name extends RequestName>(
+  name: Name,
+  data: MessageData<Name>
+) => {
   if (!import.meta.hot) {
     return Promise.reject("missing vite");
   }
-  let pendingLoad = pendingReads.get(path);
-  if (pendingLoad) {
-    return pendingLoad.promise;
-  }
-  pendingLoad = Promise.withResolvers<string>();
-  pendingReads.set(path, pendingLoad);
-  import.meta.hot.send("files:read", { path });
-  return pendingLoad.promise;
+  const id = crypto.randomUUID();
+  const pendingRequest = Promise.withResolvers<OkResponse<Name>>();
+  pendingRequests.set(
+    id,
+    pendingRequest as unknown as PromiseWithResolvers<OkResponse<RequestName>>
+  );
+  import.meta.hot.send(name, { id, ...data } as any);
+  return pendingRequest.promise;
 };
+
+export const read = async (path: string) =>
+  (await request("files:read", { path })).contents;
 
 export const write = (path: string, contents: string) => {
   if (!import.meta.hot) {
@@ -36,3 +54,6 @@ export const write = (path: string, contents: string) => {
   }
   import.meta.hot.send("files:write", { path, contents });
 };
+
+export const list = async (path: string) =>
+  (await request("files:list", { path })).list;
