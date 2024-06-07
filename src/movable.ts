@@ -11,7 +11,7 @@ import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
 import { scene } from "./scene";
 
-const handleMesh = new CapsuleGeometry(0.1, 2);
+const handleGeometry = new CapsuleGeometry(0.1, 2);
 const handleMaterial = new MeshBasicMaterial({
   color: new Color("white"),
 });
@@ -30,7 +30,7 @@ export class Movable extends Object3D {
   }
 
   initialiseHandle() {
-    this.handle = new Mesh(handleMesh, handleMaterial);
+    this.handle = new Mesh(handleGeometry, handleMaterial);
     this.handle.rotateZ(Math.PI / 2);
     this.add(this.handle);
     let dragging = false;
@@ -88,7 +88,11 @@ export class Movable extends Object3D {
       .getCenter(new Vector3())
       .setY(this.boundingBox.min.y)
       .add(this.getWorldPosition(new Vector3()));
-    this.handle.position.copy(this.worldToLocal(worldPosition));
+    this.handle.position.copy(
+      this.worldToLocal(worldPosition).add(
+        new Vector3(0, -handleGeometry.parameters.radius, 0)
+      )
+    );
   }
 
   onDrag({ localOffsetIn }: DragContext) {
