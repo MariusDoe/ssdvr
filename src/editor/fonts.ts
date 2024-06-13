@@ -70,7 +70,18 @@ export const getCharacterMesh = (
   size = 1
 ) => {
   const geometry = getCharacterGeometry(font, character);
-  const mesh = new Mesh(geometry, material);
+  const mesh = new CharacterMesh(font, character, geometry, material);
   mesh.scale.setScalar(size);
   return mesh;
 };
+
+export class CharacterMesh extends Mesh {
+  constructor(
+    public font: Font,
+    public character: string,
+    geometry: BufferGeometry,
+    material: Material
+  ) {
+    super(geometry, material);
+  }
+}
