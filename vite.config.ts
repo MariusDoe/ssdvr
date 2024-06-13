@@ -4,4 +4,7 @@ import { hmr } from "./plugins/hmr";
 
 export default defineConfig({
   plugins: [hmr(), files()],
+  esbuild: {
+    sourcemap: false,
+  },
 });
