@@ -5,6 +5,7 @@ import {
   MeshBasicMaterial,
   Object3D,
   Quaternion,
+  SphereGeometry,
   Vector3,
 } from "three";
 import { DragContext, createDraggable } from "./draggable";
@@ -24,13 +25,19 @@ const handleMaterial = new MeshBasicMaterial({
 const handleHoverMaterial = new MeshBasicMaterial({
   color: new Color("lightblue"),
 });
+const removeButtonGeometry = new SphereGeometry(0.1);
+const removeButtonMaterial = new MeshBasicMaterial({
+  color: new Color("red"),
+});
 
 export class Movable extends Object3D {
   handle!: Mesh;
+  removeButton!: Mesh;
 
   constructor() {
     super();
     this.initialiseHandle();
+    this.initialiseRemoveButton();
   }
 
   initialiseHandle() {
@@ -71,10 +78,28 @@ export class Movable extends Object3D {
     );
   }
 
+  initialiseRemoveButton() {
+    this.removeButton = new Mesh(removeButtonGeometry, removeButtonMaterial);
+    this.add(this.removeButton);
+    this.removeButton.position.x = -(
+      handleGeometry.parameters.length / 2 +
+      handleGeometry.parameters.radius +
+      removeButtonGeometry.parameters.radius * 1.5
+    );
+    this.removeButton.position.y = -removeButtonGeometry.parameters.radius;
+    onController(
+      "select",
+      { mode: "object", object: this.removeButton, recurse: true },
+      () => {
+        this.removeFromParent();
+      }
+    );
+  }
+
   tick() {
     const zero = new Vector3();
     for (const child of this.children) {
-      if (child === this.handle) {
+      if (child === this.handle || child === this.removeButton) {
         continue;
       }
       const size = child.getSizeInMovable?.() ?? zero;
