@@ -2,7 +2,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
 import { Object3D, Object3DEventMap } from "three";
-import { renderPlugin } from "./render-plugin";
+import { RenderPlugin, renderPlugin } from "./render-plugin";
 
 interface EditorEventMap extends Object3DEventMap {
   save: {};
@@ -10,6 +10,7 @@ interface EditorEventMap extends Object3DEventMap {
 
 export class Editor extends Object3D<EditorEventMap> {
   view: EditorView;
+  renderPlugin!: RenderPlugin;
 
   constructor(initialDocument = "") {
     super();
@@ -36,6 +37,10 @@ export class Editor extends Object3D<EditorEventMap> {
         ]),
       ],
     });
+  }
+
+  getSizeInMovable() {
+    return this.renderPlugin.getSizeInMovable();
   }
 
   load(document: string) {

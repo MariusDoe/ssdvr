@@ -1,6 +1,14 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import { Color, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
+import {
+  Color,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  PlaneGeometry,
+  Vector3,
+} from "three";
 import { InteractionContext, onController } from "../interaction";
+import { Editor } from "./editor";
 import { fontFromStyle, fonts, getCharacterMesh, measure } from "./fonts";
 import {
   backgroundMaterialFromStyles,
@@ -11,13 +19,14 @@ interface Options {
   size: number;
 }
 
-class RenderPlugin extends Object3D {
+export class RenderPlugin extends Object3D {
   view: EditorView;
   options: Options;
   // font constants
   lineHeight: number;
   glyphAdvance: number;
   // draw state
+  height = 0;
   width = 0;
   x = 0;
   y = 0;
@@ -46,6 +55,10 @@ class RenderPlugin extends Object3D {
       }
     );
     this.focus();
+  }
+
+  getSizeInMovable() {
+    return new Vector3(0, this.height, 0);
   }
 
   update() {
@@ -91,6 +104,7 @@ class RenderPlugin extends Object3D {
   drawLines() {
     const dom = this.view.contentDOM;
     const lines = dom.querySelectorAll(".cm-line");
+    this.height = (lines.length - 3 / 4) * this.lineHeight;
     this.width =
       Math.max(
         0,
@@ -184,9 +198,10 @@ class RenderPlugin extends Object3D {
   }
 }
 
-export const renderPlugin = (options: Options, parent: Object3D) =>
+export const renderPlugin = (options: Options, parent: Editor) =>
   ViewPlugin.define((view) => {
     const plugin = new RenderPlugin(view, options);
+    parent.renderPlugin = plugin;
     parent.add(plugin);
     return plugin;
   });

@@ -1,5 +1,4 @@
 import {
-  Box3,
   CapsuleGeometry,
   Color,
   Mesh,
@@ -12,6 +11,12 @@ import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
 import { scene } from "./scene";
 
+declare module "three" {
+  interface Object3D {
+    getSizeInMovable?(): Vector3;
+  }
+}
+
 const handleGeometry = new CapsuleGeometry(0.1, 2);
 const handleMaterial = new MeshBasicMaterial({
   color: new Color("white"),
@@ -21,18 +26,17 @@ const handleHoverMaterial = new MeshBasicMaterial({
 });
 
 export class Movable extends Object3D {
-  boundingBox: Box3;
   handle!: Mesh;
 
   constructor() {
     super();
     this.initialiseHandle();
-    this.boundingBox = new Box3();
   }
 
   initialiseHandle() {
     this.handle = new Mesh(handleGeometry, handleMaterial);
     this.handle.rotateZ(Math.PI / 2);
+    this.handle.position.y = -handleGeometry.parameters.radius;
     this.add(this.handle);
     let dragging = false;
     let hovered = false;
@@ -67,33 +71,15 @@ export class Movable extends Object3D {
     );
   }
 
-  updateBoundingBox() {
-    const worldPosition = this.getWorldPosition(new Vector3());
-    this.boundingBox.translate(worldPosition);
+  tick() {
+    const zero = new Vector3();
     for (const child of this.children) {
       if (child === this.handle) {
         continue;
       }
-      this.boundingBox.expandByObject(child);
+      const size = child.getSizeInMovable?.() ?? zero;
+      child.position.set(-size.x / 2, size.y, -size.z / 2);
     }
-    this.boundingBox.translate(worldPosition.negate());
-  }
-
-  tick() {
-    this.updateBoundingBox();
-    if (this.boundingBox.isEmpty()) {
-      this.handle.position.set(0, 0, 0);
-      return;
-    }
-    const worldPosition = this.boundingBox
-      .getCenter(new Vector3())
-      .setY(this.boundingBox.min.y)
-      .add(this.getWorldPosition(new Vector3()));
-    this.handle.position.copy(
-      this.worldToLocal(worldPosition).add(
-        new Vector3(0, -handleGeometry.parameters.radius, 0)
-      )
-    );
   }
 
   onDrag({ controller, localOffsetIn, distance, addToDistance }: DragContext) {
@@ -106,7 +92,8 @@ export class Movable extends Object3D {
       .normalize();
     const localOffset = localOffsetIn(this);
     const oldHandComponent = localOffset.dot(localHandDirection);
-    const newHandComponent = oldHandComponent * Math.max(0.2, Math.min(distance ** 1.5, 20));
+    const newHandComponent =
+      oldHandComponent * Math.max(1, Math.min(distance ** 1.5, 20));
     const handComponentDiff = newHandComponent - oldHandComponent;
     localOffset.add(localHandDirection.setLength(handComponentDiff));
     addToDistance(handComponentDiff);

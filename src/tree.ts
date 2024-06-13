@@ -4,6 +4,7 @@ import {
   Object3D,
   Object3DEventMap,
   PlaneGeometry,
+  Vector3,
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
 import { getCharacterMesh, measure } from "./editor/fonts";
@@ -41,6 +42,10 @@ export class Tree extends Object3D<TreeEventMap> {
     );
     this.height = this.entry.height;
     this.add(this.entry);
+  }
+
+  getSizeInMovable() {
+    return new Vector3(0, this.height - this.entry.height / 2, 0);
   }
 
   clearTrees() {
