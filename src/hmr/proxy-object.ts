@@ -45,7 +45,9 @@ export const objectProxyHandler: Required<ProxyHandler<ProxyTarget>> = {
     if (value instanceof Function) {
       return function (this: unknown, ...args: unknown[]) {
         return value.apply(
-          this === target[proxyKey] ? target[proxyTargetKey] : this,
+          this === target[proxyKey] && property !== Symbol.hasInstance
+            ? target[proxyTargetKey]
+            : this,
           args
         );
       };
