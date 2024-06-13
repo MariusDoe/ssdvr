@@ -1,6 +1,6 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Color, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
-import { onController } from "../interaction";
+import { InteractionContext, onController } from "../interaction";
 import { fontFromStyle, fonts, getCharacterMesh, measure } from "./fonts";
 import {
   backgroundMaterialFromStyles,
@@ -41,8 +41,8 @@ class RenderPlugin extends Object3D {
     onController(
       "select",
       { mode: "object", object: this, recurse: true },
-      () => {
-        this.onClick();
+      (context: InteractionContext<"object", "select">) => {
+        this.onClick(context);
       }
     );
     this.focus();
@@ -52,8 +52,18 @@ class RenderPlugin extends Object3D {
     this.requestRedraw();
   }
 
-  onClick() {
+  onClick(context: InteractionContext<"object", "select">) {
     this.focus();
+    const localPosition = this.worldToLocal(context.intersection.point.clone());
+    const column = Math.round(localPosition.x / this.glyphAdvance);
+    const lineNumber = Math.round(-localPosition.y / this.lineHeight);
+    const line = this.view.state.doc.line(lineNumber + 1);
+    const pos = Math.min(line.from + column, line.to);
+    this.view.dispatch({
+      selection: {
+        anchor: pos,
+      },
+    });
   }
 
   focus() {
