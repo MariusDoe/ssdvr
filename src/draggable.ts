@@ -10,6 +10,8 @@ export type DragContext = DraggableContext & {
   worldOffset: Vector3;
   localOffset(): Vector3;
   localOffsetIn(referenceObject: Object3D): Vector3;
+  distance: number;
+  addToDistance(distanceOffset: number): void;
 };
 
 export const createDraggable = (
@@ -55,12 +57,11 @@ export const createDraggable = (
     if (!worldLast || selectingController !== controller) {
       return;
     }
-    const worldCurrent = controller.hand.localToWorld(
-      new Vector3(0, 0, -distance)
-    );
+    const targetPoint = () =>
+      controller.hand.localToWorld(new Vector3(0, 0, -distance));
+    const worldCurrent = targetPoint();
     const worldOffset = worldCurrent.clone().sub(worldLast);
     const savedWorldLast = worldLast;
-    worldLast = worldCurrent;
     const localOffsetIn = (referenceObject: Object3D) => {
       const localLast = referenceObject.worldToLocal(savedWorldLast.clone());
       const localCurrent = referenceObject.worldToLocal(worldCurrent.clone());
@@ -71,6 +72,12 @@ export const createDraggable = (
       worldOffset,
       localOffset: () => localOffsetIn(object),
       localOffsetIn,
+      distance,
+      addToDistance(distanceOffset: number) {
+        distance += distanceOffset;
+      },
     });
+    // recompute due to addToDistance
+    worldLast = targetPoint();
   });
 };

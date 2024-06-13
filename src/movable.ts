@@ -5,6 +5,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   Object3D,
+  Quaternion,
   Vector3,
 } from "three";
 import { DragContext, createDraggable } from "./draggable";
@@ -95,8 +96,21 @@ export class Movable extends Object3D {
     );
   }
 
-  onDrag({ localOffsetIn }: DragContext) {
-    this.position.add(localOffsetIn(this));
+  onDrag({ controller, localOffsetIn, distance, addToDistance }: DragContext) {
+    const quaternion = new Quaternion();
+    const worldHandDirection = new Vector3(0, 0, -1).applyQuaternion(
+      controller.hand.getWorldQuaternion(quaternion)
+    );
+    const localHandDirection = worldHandDirection
+      .applyQuaternion(this.getWorldQuaternion(quaternion).invert())
+      .normalize();
+    const localOffset = localOffsetIn(this);
+    const oldHandComponent = localOffset.dot(localHandDirection);
+    const newHandComponent = oldHandComponent * Math.max(0.2, Math.min(distance ** 1.5, 20));
+    const handComponentDiff = newHandComponent - oldHandComponent;
+    localOffset.add(localHandDirection.setLength(handComponentDiff));
+    addToDistance(handComponentDiff);
+    this.position.add(localOffset);
   }
 }
 
