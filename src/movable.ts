@@ -64,18 +64,10 @@ export class Movable extends Object3D {
         updateMaterial();
       },
     });
-    onController(
-      ["enter", "exit"],
-      {
-        mode: "object",
-        object: this.handle,
-        recurse: true,
-      },
-      ({ active }) => {
-        hovered = active.length > 0;
-        updateMaterial();
-      }
-    );
+    onController(["enter", "exit"], this.handle, "recurse", ({ active }) => {
+      hovered = active.length > 0;
+      updateMaterial();
+    });
   }
 
   initialiseRemoveButton() {
@@ -87,13 +79,9 @@ export class Movable extends Object3D {
       removeButtonGeometry.parameters.radius * 1.5
     );
     this.removeButton.position.y = -removeButtonGeometry.parameters.radius;
-    onController(
-      "select",
-      { mode: "object", object: this.removeButton, recurse: true },
-      () => {
-        this.removeFromParent();
-      }
-    );
+    onController("select", this.removeButton, "recurse", () => {
+      this.removeFromParent();
+    });
   }
 
   tick() {

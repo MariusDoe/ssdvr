@@ -33,13 +33,9 @@ export class Tree extends Object3D<TreeEventMap> {
     super();
     this.options = options;
     this.entry = new TreeEntry(content, options);
-    onController(
-      "select",
-      { mode: "object", object: this.entry, recurse: true },
-      () => {
-        this.click();
-      }
-    );
+    onController("select", this.entry, "recurse", () => {
+      this.click();
+    });
     this.height = this.entry.height;
     this.add(this.entry);
   }

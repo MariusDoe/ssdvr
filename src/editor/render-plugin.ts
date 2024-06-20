@@ -9,7 +9,11 @@ import {
   Vector3,
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
-import { InteractionContext, onController } from "../interaction";
+import {
+  InteractionContext,
+  IntersectionMode,
+  onController,
+} from "../interaction";
 import { Editor } from "./editor";
 import {
   CharacterMesh,
@@ -53,13 +57,9 @@ export class RenderPlugin extends Object3D implements PluginValue {
     const { lineHeight, glyphAdvance } = measure(fonts[0], this.options.size);
     this.lineHeight = lineHeight;
     this.glyphAdvance = glyphAdvance;
-    onController(
-      "select",
-      { mode: "object", object: this, recurse: true },
-      (context: InteractionContext<"object", "select">) => {
-        this.onClick(context);
-      }
-    );
+    onController("select", this, "recurse", (context) => {
+      this.onClick(context);
+    });
     this.focus();
     this.updateWidth();
     this.addNodesBelow(this.view.contentDOM);
@@ -292,7 +292,7 @@ export class RenderPlugin extends Object3D implements PluginValue {
     }
   }
 
-  onClick(context: InteractionContext<"object", "select">) {
+  onClick(context: InteractionContext<IntersectionMode, "select">) {
     this.focus();
     const localPosition = this.worldToLocal(context.intersection.point.clone());
     const column = Math.round(localPosition.x / this.glyphAdvance);

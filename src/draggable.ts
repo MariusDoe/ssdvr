@@ -27,7 +27,8 @@ export const createDraggable = (
   let selectingController: Controller;
   onController(
     "selectstart",
-    { mode: "object", object, recurse: true },
+    object,
+    "recurse",
     ({ intersection, controller }) => {
       worldLast = intersection.point;
       distance = intersection.distance;
@@ -37,23 +38,19 @@ export const createDraggable = (
       });
     }
   );
-  onController(
-    "selectend",
-    { mode: "whileInScene", object },
-    ({ controller }) => {
-      if (controller !== selectingController) {
-        return;
-      }
-      worldLast = null;
-      listeners.onDragEnd?.({
-        controller,
-      });
+  onController("selectend", object, "whileInScene", ({ controller }) => {
+    if (controller !== selectingController) {
+      return;
     }
-  );
+    worldLast = null;
+    listeners.onDragEnd?.({
+      controller,
+    });
+  });
   if (!listeners.onDrag) {
     return;
   }
-  onController("move", { mode: "whileInScene", object }, ({ controller }) => {
+  onController("move", object, "whileInScene", ({ controller }) => {
     if (!worldLast || selectingController !== controller) {
       return;
     }
