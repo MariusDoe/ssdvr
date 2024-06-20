@@ -5,7 +5,7 @@ export const foregroundMaterialFromStyle = (style: CSSStyleDeclaration) =>
   materialFromColor(style.color);
 
 const colorAlpha = (color: string) => {
-  const match = color.match(/rgba\([^,]+,[^,],[^,],\s(\S+)\)/);
+  const match = color.match(/rgba\([^,]+,[^,]+,[^,]+,\s*(\S+)\s*\)/);
   if (match) {
     return parseFloat(match[1]);
   } else {
