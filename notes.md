@@ -44,6 +44,8 @@
 - idea: tick system traversing scene
 - how to notify objects of tick?
   - [`userData` should not hold functions](https://threejs.org/docs/index.html?q=object3#api/en/core/Object3D.userData)
+  - global registry of tick listeners
+    - problem: when to remove listeners?
   - custom tick event?
   - custom tick method?
 - decision: both event and method
