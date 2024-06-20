@@ -127,6 +127,22 @@
     - don't want to clip all objects
   - local clipping per material
     - don't have control over materials of child object
-- solution:
-  - remove child object from scene and render it separately
-  - use global clipping on separate render call
+- ideas:
+  - render order
+    - use THREE's render order to enable clipping before the children and disable after
+    - question: can clipping be changed mid-render?
+  - subtree rendering
+    - remove child object from scene and render it separately
+    - use global clipping on separate render call
+    - problem: lights probably won't have an effect on subtree
+  - layered rendering
+    - put scrollable children onto separate layer
+    - render each layer individually with the respective clipping options
+    - lights can be put on separate layer and rendered on each pass
+- decision: layered rendering, because it seems easiest and most promising
+- implementation problems
+  - camera layers
+    - THREE's VR implementation creates separate cameras
+    - it keeps these up to date with the regular user-created camera
+    - but it doesn't sync camera.layers
+    - solution: assign layers manually to VR cameras
