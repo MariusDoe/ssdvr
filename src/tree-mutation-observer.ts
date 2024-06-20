@@ -17,8 +17,18 @@ type ObjectListeners = {
   [Event in Events]?: EventListener<Object3DEventMap[Event], Event, Object3D>;
 };
 
+export type Watcher<T> = {
+  added: (watched: Object3D) => T;
+  removed: (watched: Object3D, value: T) => void;
+};
+
+export type WatcherWithValue<T> = Watcher<T> & {
+  value: T;
+};
+
 export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEventMap> {
   inTree = new Map<Object3D, ObjectListeners>();
+  watchers = new WeakMap<Object3D, WatcherWithValue<unknown>[]>();
 
   constructor(root: Object3D) {
     super();
@@ -42,6 +52,9 @@ export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEv
       object.addEventListener(event, listeners[event as Events] as any);
     }
     this.dispatchEvent({ type: "added", object });
+    this.watchers.get(object)?.forEach((watcher) => {
+      watcher.value = watcher.added(object);
+    });
   }
 
   addAll(object: Object3D) {
@@ -60,12 +73,25 @@ export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEv
       object.removeEventListener(event, listeners[event as Events] as any);
     }
     this.dispatchEvent({ type: "removed", object });
+    this.watchers.get(object)?.forEach((watcher) => {
+      watcher.removed(object, watcher.value);
+      watcher.value = undefined;
+    });
   }
 
   removeAll(object: Object3D) {
     object.traverse((descendent) => {
       this.remove(descendent);
     });
+  }
+
+  watch<T>(object: Object3D, watcher: Watcher<T>) {
+    const watchers = this.watchers.get(object) ?? [];
+    watchers.push(watcher as WatcherWithValue<unknown>);
+    this.watchers.set(object, watchers);
+    if (this.inTree.has(object)) {
+      (watcher as WatcherWithValue<T>).value = watcher.added(object);
+    }
   }
 }
 
