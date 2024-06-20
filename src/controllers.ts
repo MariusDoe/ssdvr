@@ -10,7 +10,8 @@ import { XRControllerModelFactory } from "three/examples/jsm/Addons.js";
 import { useAdd, useEventListener } from "./dispose-hooks";
 import { onDispose } from "./hmr/dispose";
 import { captureRunningModule } from "./hmr/running-module";
-import { renderer, scene } from "./scene";
+import { renderer } from "./renderer";
+import { scene } from "./scene";
 
 export type Controller = {
   source?: XRInputSource;

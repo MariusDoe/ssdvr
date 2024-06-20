@@ -1,5 +1,5 @@
 import { VRButton } from "three/examples/jsm/Addons.js";
-import { renderer } from "./scene";
+import { renderer } from "./renderer";
 
 renderer.xr.enabled = true;
 
