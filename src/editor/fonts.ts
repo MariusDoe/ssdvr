@@ -58,7 +58,7 @@ export const getCharacterGeometry = (font: Font, character: string) => {
       shape.holes = [];
     }
   }
-  const geometry = new ShapeGeometry(shapes);
+  const geometry = new ShapeGeometry(shapes, 3);
   cache.set(character, geometry);
   return geometry;
 };
