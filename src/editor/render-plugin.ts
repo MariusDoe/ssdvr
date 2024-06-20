@@ -192,6 +192,7 @@ export class RenderPlugin extends Object3D implements PluginValue {
     this.addNode(lineNode);
     const line = this.lineMap.get(lineNode)!;
     line.add(textSpan);
+    textSpan.updateBackgroundMaterial();
     this.linesToUpdate.add(line);
   }
 
@@ -350,6 +351,22 @@ export class RenderPlugin extends Object3D implements PluginValue {
     this.styleCache.set(element, style);
     return style;
   }
+
+  *ancestorsOf(element: Element) {
+    let current = element;
+    const root = this.view.contentDOM;
+    while (current !== root) {
+      yield current;
+      current = current.parentElement!;
+    }
+  }
+
+  backgroundMaterialFor(element: Element) {
+    const parentStyles = [...this.ancestorsOf(element)].map((parent) =>
+      this.styleFor(parent)
+    );
+    return backgroundMaterialFromStyles(parentStyles);
+  }
 }
 
 class Line extends Object3D {
@@ -361,7 +378,7 @@ class Line extends Object3D {
     this.background = new Mesh(planeGeometry);
     this.background.scale.y = lineHeight;
     this.background.position.y = lineHeight / 4;
-    this.background.position.z = -RenderPlugin.zOrder;
+    this.background.position.z = -2 * RenderPlugin.zOrder;
     this.add(this.background);
     this.updatePosition();
     this.updateWidth();
@@ -383,10 +400,7 @@ class Line extends Object3D {
   }
 
   updateMaterial() {
-    const parentStyles = [...this.ancestors()].map((parent) =>
-      this.plugin.styleFor(parent as Element)
-    );
-    this.background.material = backgroundMaterialFromStyles(parentStyles);
+    this.background.material = this.plugin.backgroundMaterialFor(this.element);
   }
 
   updateTextSpanPositions() {
@@ -396,21 +410,13 @@ class Line extends Object3D {
       }
     }
   }
-
-  *ancestors() {
-    let current = this.element;
-    const root = this.plugin.view.contentDOM;
-    while (current !== root) {
-      yield current;
-      current = current.parentElement!;
-    }
-  }
 }
 
 class TextSpan extends Object3D {
-  declare children: CharacterMesh[];
+  characters: CharacterMesh[] = [];
   font!: Font;
-  material!: Material;
+  foregroundMaterial!: Material;
+  background: Mesh | null = null;
 
   constructor(public node: Text, public plugin: RenderPlugin) {
     super();
@@ -430,47 +436,96 @@ class TextSpan extends Object3D {
   updateText() {
     const text = this.node.textContent ?? "";
     console.log("updating span", text);
-    const unused = this.children.slice();
+    const unused = this.characters.slice();
     if (text.length !== unused.length) {
       this.plugin.widthUpdate = true;
     }
     for (let i = 0; i < text.length; i++) {
       const character = text[i];
       const index = unused.findIndex((mesh) => mesh.character === character);
-      let mesh: Mesh;
+      let mesh: CharacterMesh;
       if (index >= 0) {
         [mesh] = unused.splice(index, 1);
       } else {
         mesh = getCharacterMesh(
           this.font,
           character,
-          this.material,
+          this.foregroundMaterial,
           this.plugin.options.size
         );
         this.add(mesh);
+        this.characters.push(mesh);
       }
       mesh.position.x = i * this.plugin.glyphAdvance;
     }
-    for (const child of unused) {
-      this.remove(child);
+    for (const character of unused) {
+      this.remove(character);
     }
+    this.characters = this.characters.filter(
+      (character) => !unused.includes(character)
+    );
+    this.updateBackgroundWidth();
   }
 
   updateMaterial() {
+    this.updateForegroundMaterial();
+    this.updateBackgroundMaterial();
+  }
+
+  updateForegroundMaterial() {
     const style = this.plugin.styleFor(this.node.parentElement!);
     const material = foregroundMaterialFromStyle(style);
     const font = fontFromStyle(style);
     if (font !== this.font) {
       this.font = font;
-      this.material = material;
+      this.foregroundMaterial = material;
       this.clear();
       this.updateText();
-    } else if (material !== this.material) {
-      this.material = material;
-      for (const child of this.children) {
+    } else if (material !== this.foregroundMaterial) {
+      this.foregroundMaterial = material;
+      for (const child of this.characters) {
         child.material = material;
       }
     }
+  }
+
+  updateBackgroundMaterial() {
+    if (!this.parent) {
+      return;
+    }
+    let material: Material | null = this.plugin.backgroundMaterialFor(
+      this.node.parentElement!
+    );
+    if (material == (this.parent as Line).background.material) {
+      material = null;
+    }
+    if (material) {
+      if (this.background) {
+        this.background.material = material;
+      } else {
+        this.background = new Mesh(planeGeometry, material);
+        const { lineHeight } = this.plugin;
+        this.background.scale.y = lineHeight;
+        this.background.position.y = lineHeight / 4;
+        this.background.position.z = -RenderPlugin.zOrder;
+        this.add(this.background);
+        this.updateBackgroundWidth();
+      }
+    } else {
+      if (this.background) {
+        this.remove(this.background);
+        this.background = null;
+      }
+    }
+  }
+
+  updateBackgroundWidth() {
+    if (!this.background) {
+      return;
+    }
+    const width = this.characters.length * this.plugin.glyphAdvance;
+    this.background.scale.x = width;
+    this.background.position.x = width / 2;
   }
 }
 
