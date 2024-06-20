@@ -30,17 +30,17 @@ demo
 + cursor interactions
 + remove button
 + Movable: fix handle at (0, 0, 0) and make child (e. g. Editor) responsible for positioning self
-  - getSizeInMovable -> getOffsetInMovable
-- RenderPlugin rewrite based on MutationObserver
-- scroller:
-  - camera layer + object layer
+  + getSizeInMovable -> getOffsetInMovable
++ RenderPlugin rewrite based on MutationObserver
++ scroller:
+  + camera layer + object layer
   - based on render order
   - sub-scene rendering for clipping
 - constraint: interaction tweaking only within VR
 - controller dragging: z axis multiplier
   - hand space transformation
   - bug?
-- custom mutation observer by recursively listening for childadded/childremoved
++ custom mutation observer by recursively listening for childadded/childremoved
 - dragging inertia?
 - Star Wars: use the force
 - Editor optimization
@@ -53,5 +53,5 @@ demo
   - look at user while dragging
   - look at user always
   - look at origin always
-- file picker bug: after closing and reopening parent, cannot open children
++ file picker bug: after closing and reopening parent, cannot open children
 - iframe using HTMLCanvas for (THREE.js) documentation
