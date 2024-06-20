@@ -39,8 +39,8 @@ export class Editor extends Object3D<EditorEventMap> {
     });
   }
 
-  getSizeInMovable() {
-    return this.renderPlugin.getSizeInMovable();
+  getOffsetInMovable() {
+    return this.renderPlugin.getOffsetInMovable();
   }
 
   load(document: string) {

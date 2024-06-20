@@ -44,7 +44,7 @@ export class Tree extends Object3D<TreeEventMap> {
     this.add(this.entry);
   }
 
-  getSizeInMovable() {
+  getOffsetInMovable() {
     return new Vector3(0, this.height - this.entry.height / 2, 0);
   }
 

@@ -76,7 +76,7 @@ export class RenderPlugin extends Object3D implements PluginValue {
     });
   }
 
-  getSizeInMovable() {
+  getOffsetInMovable() {
     return new Vector3(0, this.height(), 0);
   }
 

@@ -14,7 +14,7 @@ import { scene } from "./scene";
 
 declare module "three" {
   interface Object3D {
-    getSizeInMovable?(): Vector3;
+    getOffsetInMovable?(): Vector3;
   }
 }
 
@@ -102,8 +102,8 @@ export class Movable extends Object3D {
       if (child === this.handle || child === this.removeButton) {
         continue;
       }
-      const size = child.getSizeInMovable?.() ?? zero;
-      child.position.set(-size.x / 2, size.y, -size.z / 2);
+      const offset = child.getOffsetInMovable?.() ?? zero;
+      child.position.copy(offset);
     }
   }
 
