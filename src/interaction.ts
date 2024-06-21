@@ -149,6 +149,7 @@ export const onController = <
 };
 
 const raycaster = new Raycaster();
+raycaster.layers.enableAll();
 
 const hoveredObjects = new Map<Controller, Object3D>();
 
