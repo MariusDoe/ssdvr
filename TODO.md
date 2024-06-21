@@ -36,6 +36,15 @@ demo
   + camera layer + object layer
   - based on render order
   - sub-scene rendering for clipping
+- MovableController
+  - set offset
+- SrollableController
+  - determines height
+  - moves primary selection into view
+  - notifies Editor of visibility change
+    - only render visible lines (THREE.js add/remove)
+- scroll handle
+- iframe using HTMLCanvas for (THREE.js) documentation
 - constraint: interaction tweaking only within VR
 - controller dragging: z axis multiplier
   - hand space transformation
@@ -54,4 +63,3 @@ demo
   - look at user always
   - look at origin always
 + file picker bug: after closing and reopening parent, cannot open children
-- iframe using HTMLCanvas for (THREE.js) documentation
