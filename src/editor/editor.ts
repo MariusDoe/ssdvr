@@ -3,9 +3,11 @@ import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
 import { Object3D, Object3DEventMap } from "three";
 import { ForwardingMovableController } from "../movable-controller";
+import { ForwardingScrollerController } from "../scroller-controller";
 import {
   RenderPlugin,
   RenderPluginMovableController,
+  RenderPluginScrollerController,
   renderPlugin,
 } from "./render-plugin";
 
@@ -64,4 +66,9 @@ export class Editor extends Object3D<EditorEventMap> {
 export const EditorMovableController = ForwardingMovableController(
   (editor: Editor) => editor.renderPlugin,
   RenderPluginMovableController
+);
+
+export const EditorScrollerController = ForwardingScrollerController(
+  (editor: Editor) => editor.renderPlugin,
+  RenderPluginScrollerController
 );

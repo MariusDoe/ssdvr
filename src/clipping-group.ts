@@ -1,4 +1,4 @@
-import { Group, Light, Plane } from "three";
+import { Group, Light, Object3DEventMap, Plane } from "three";
 import { firstClippingGroupLayer, lightsLayer } from "./layers";
 import { sceneMutationObserver } from "./tree-mutation-observer";
 import { isAncestor } from "./utils";
@@ -15,7 +15,9 @@ const nextClippingGroupLayer = () => {
   throw new Error("too many ClippingGroups");
 };
 
-export class ClippingGroup extends Group {
+export class ClippingGroup<
+  TEventMap extends Object3DEventMap = Object3DEventMap
+> extends Group<TEventMap> {
   layer = -1;
   clippingPlanes: Plane[] = [];
 }

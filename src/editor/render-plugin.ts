@@ -1,20 +1,29 @@
-import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
+import { SelectionRange } from "@codemirror/state";
+import {
+  EditorView,
+  PluginValue,
+  ViewPlugin,
+  ViewUpdate,
+} from "@codemirror/view";
 import {
   Color,
   Material,
   Mesh,
   MeshBasicMaterial,
   Object3D,
+  Object3DEventMap,
   PlaneGeometry,
   Vector3,
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
+import { clamp } from "three/src/math/MathUtils.js";
 import {
   InteractionContext,
   IntersectionMode,
   onController,
 } from "../interaction";
 import { MovableController } from "../movable-controller";
+import { ScrollerController } from "../scroller-controller";
 import { Editor } from "./editor";
 import {
   CharacterMesh,
@@ -34,7 +43,16 @@ interface Options {
 
 const planeGeometry = new PlaneGeometry();
 
-export class RenderPlugin extends Object3D implements PluginValue {
+interface RenderPluginEventMap extends Object3DEventMap {
+  mainSelectionChanged: {
+    selection: SelectionRange;
+  };
+}
+
+export class RenderPlugin
+  extends Object3D<RenderPluginEventMap>
+  implements PluginValue
+{
   // font constants
   lineHeight: number;
   glyphAdvance: number;
@@ -78,10 +96,10 @@ export class RenderPlugin extends Object3D implements PluginValue {
   }
 
   height() {
-    return this.lineMap.size * this.lineHeight;
+    return this.view.state.doc.lines * this.lineHeight;
   }
 
-  update() {
+  update(update: ViewUpdate) {
     console.log("requestMeasure");
     this.view.requestMeasure({
       read: () => {
@@ -90,7 +108,60 @@ export class RenderPlugin extends Object3D implements PluginValue {
         this.scheduledMutations = [];
       },
     });
-    this.updateSelections();
+    if (update.selectionSet) {
+      this.updateSelections();
+      this.dispatchEvent({
+        type: "mainSelectionChanged",
+        selection: this.view.state.selection.main,
+      });
+    }
+  }
+
+  scrollWorldPositionIntoView(position: Vector3) {
+    this.scrollPosIntoView(this.worldPositionToPos(position));
+  }
+
+  scrollLocalPositionIntoView(position: Vector3) {
+    this.scrollPosIntoView(this.localPositionToPos(position));
+  }
+
+  scrollLineIntoView(line: number) {
+    this.scrollPosIntoView(this.view.state.doc.line(line).from);
+  }
+
+  scrollPosIntoView(pos: number) {
+    requestAnimationFrame(() => {
+      this.view.dispatch({
+        effects: [
+          EditorView.scrollIntoView(pos, {
+            y: "center",
+          }),
+        ],
+      });
+    });
+  }
+
+  posToLocalPosition(pos: number) {
+    const line = this.view.state.doc.lineAt(pos);
+    const column = pos - line.from;
+    return new Vector3(
+      column * this.glyphAdvance,
+      -(line.number - 1) * this.lineHeight,
+      0
+    );
+  }
+
+  worldPositionToPos(position: Vector3) {
+    return this.localPositionToPos(this.worldToLocal(position.clone()));
+  }
+
+  localPositionToPos(position: Vector3) {
+    const column = Math.round(position.x / this.glyphAdvance);
+    const lineNumber = Math.round(-position.y / this.lineHeight);
+    const line = this.view.state.doc.line(
+      clamp(lineNumber + 1, 1, this.view.state.doc.lines)
+    );
+    return Math.min(line.from + column, line.to);
   }
 
   updateWidth() {
@@ -291,11 +362,7 @@ export class RenderPlugin extends Object3D implements PluginValue {
 
   onClick(context: InteractionContext<IntersectionMode, "select">) {
     this.focus();
-    const localPosition = this.worldToLocal(context.intersection.point.clone());
-    const column = Math.round(localPosition.x / this.glyphAdvance);
-    const lineNumber = Math.round(-localPosition.y / this.lineHeight);
-    const line = this.view.state.doc.line(lineNumber + 1);
-    const pos = Math.min(line.from + column, line.to);
+    const pos = this.worldPositionToPos(context.intersection.point);
     this.view.dispatch({
       selection: {
         anchor: pos,
@@ -384,10 +451,8 @@ class Line extends Object3D {
 
   updatePosition() {
     console.log("moving line", this.element.textContent);
-    const { view, lineHeight } = this.plugin;
-    const pos = view.posAtDOM(this.element);
-    const line = view.state.doc.lineAt(pos);
-    this.position.y = -(line.number - 1) * lineHeight;
+    const pos = this.plugin.view.posAtDOM(this.element);
+    this.position.y = this.plugin.posToLocalPosition(pos).y;
   }
 
   updateWidth() {
@@ -423,11 +488,8 @@ class TextSpan extends Object3D {
 
   updatePosition() {
     console.log("moving span", this.node.textContent);
-    const { view, glyphAdvance } = this.plugin;
-    const pos = view.posAtDOM(this.node);
-    const line = view.state.doc.lineAt(pos);
-    const column = pos - line.from;
-    this.position.x = column * glyphAdvance;
+    const pos = this.plugin.view.posAtDOM(this.node);
+    this.position.x = this.plugin.posToLocalPosition(pos).x;
   }
 
   updateText() {
@@ -568,5 +630,35 @@ export const renderPlugin = (options: Options, parent: Editor) =>
 export class RenderPluginMovableController extends MovableController<RenderPlugin> {
   getOffset(): Vector3 {
     return new Vector3(0, this.child.height(), 0);
+  }
+}
+
+export class RenderPluginScrollerController extends ScrollerController<RenderPlugin> {
+  onScrollerSet() {
+    super.onScrollerSet();
+    this.child.addEventListener("mainSelectionChanged", ({ selection }) => {
+      this.mainSelectionChanged(selection);
+    });
+    this.scroller.addEventListener("scrolled", ({ position }) => {
+      this.scrolled(position);
+    });
+  }
+
+  getHandleXOffset(): number {
+    return this.child.width;
+  }
+
+  getHeight(): number {
+    return this.child.height();
+  }
+
+  mainSelectionChanged(selection: SelectionRange) {
+    const from = -this.child.posToLocalPosition(selection.head).y;
+    const to = from + this.child.lineHeight;
+    this.scroller.scrollRangeIntoView(from, to);
+  }
+
+  scrolled(position: number) {
+    this.child.scrollLocalPositionIntoView(new Vector3(0, -position, 0));
   }
 }
