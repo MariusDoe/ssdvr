@@ -10,13 +10,8 @@ import {
 } from "three";
 import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
+import { MovableController } from "./movable-controller";
 import { scene } from "./scene";
-
-declare module "three" {
-  interface Object3D {
-    getOffsetInMovable?(): Vector3;
-  }
-}
 
 const handleGeometry = new CapsuleGeometry(0.1, 2);
 const handleMaterial = new MeshBasicMaterial({
@@ -34,8 +29,9 @@ export class Movable extends Object3D {
   handle!: Mesh;
   removeButton!: Mesh;
 
-  constructor() {
+  constructor(public controller: MovableController) {
     super();
+    this.add(this.controller.child);
     this.initialiseHandle();
     this.initialiseRemoveButton();
   }
@@ -85,14 +81,7 @@ export class Movable extends Object3D {
   }
 
   tick() {
-    const zero = new Vector3();
-    for (const child of this.children) {
-      if (child === this.handle || child === this.removeButton) {
-        continue;
-      }
-      const offset = child.getOffsetInMovable?.() ?? zero;
-      child.position.copy(offset);
-    }
+    this.controller.applyOffset();
   }
 
   onDrag({ controller, localOffsetIn, distance, addToDistance }: DragContext) {
@@ -114,9 +103,12 @@ export class Movable extends Object3D {
   }
 }
 
-export const openInMovable = (object: Object3D) => {
-  const movable = new Movable();
-  movable.add(object);
+export const openInMovable = <T extends Object3D>(
+  object: T,
+  controllerClass: new (object: T) => MovableController
+) => {
+  const controller = new controllerClass(object);
+  const movable = new Movable(controller);
   scene.add(movable);
   return movable;
 };

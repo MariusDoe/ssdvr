@@ -8,6 +8,7 @@ import { preserve } from "./hmr/preserve";
 import { materialFromColor } from "./materials";
 import { openInMovable } from "./movable";
 import "./scene";
+import { TreeMovableController } from "./tree";
 import "./vr";
 
 preserve("file-picker", async () => {
@@ -18,6 +19,6 @@ preserve("file-picker", async () => {
     backgroundMaterial: materialFromColor("darkblue"),
     foregroundMaterial: materialFromColor("white"),
   });
-  openInMovable(filePicker);
+  openInMovable(filePicker, TreeMovableController);
   return filePicker;
 });

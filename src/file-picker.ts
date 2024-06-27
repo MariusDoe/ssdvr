@@ -1,7 +1,7 @@
 import { Editor } from "./editor/editor";
 import { list, read, write } from "./files";
 import { openInMovable } from "./movable";
-import { Scroller } from "./scroller";
+import { Scroller, ScrollerMovableController } from "./scroller";
 import { Tree, TreeOptions } from "./tree";
 
 class FileTree extends Tree {
@@ -39,7 +39,7 @@ class FileTree extends Tree {
     const editor = new Editor();
     const scroller = new Scroller(1);
     scroller.add(editor);
-    openInMovable(scroller);
+    openInMovable(scroller, ScrollerMovableController);
     const path = this.getPath();
     editor.load(await read(path));
     editor.addEventListener("save", () => {

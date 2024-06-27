@@ -9,6 +9,7 @@ import {
 import { Font } from "three/examples/jsm/Addons.js";
 import { getCharacterMesh, measure } from "./editor/fonts";
 import { onController } from "./interaction";
+import { MovableController } from "./movable-controller";
 
 export type TreeOptions = {
   size: number;
@@ -40,10 +41,6 @@ export class Tree extends Object3D<TreeEventMap> {
     this.add(this.entry);
   }
 
-  getOffsetInMovable() {
-    return new Vector3(0, this.height - this.entry.height / 2, 0);
-  }
-
   clearTrees() {
     for (const tree of this.childTrees) {
       tree.removeFromParent();
@@ -73,6 +70,12 @@ export class Tree extends Object3D<TreeEventMap> {
 
   click() {
     this.dispatchEvent({ type: "click" });
+  }
+}
+
+export class TreeMovableController extends MovableController<Tree> {
+  getOffset(): Vector3 {
+    return new Vector3(0, this.child.height - this.child.entry.height / 2, 0);
   }
 }
 

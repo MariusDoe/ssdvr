@@ -7,6 +7,7 @@ import {
 } from "three";
 import { preserve } from "./hmr/preserve";
 import { openInMovable } from "./movable";
+import { ZeroOffsetMovableController } from "./movable-controller";
 import { scene } from "./scene";
 import { TickContext } from "./tick";
 
@@ -61,7 +62,11 @@ class Planet extends Body {
 
 preserve("solarSystem", () => {
   const solarSystem = new SolarSystem();
-  openInMovable(solarSystem).position.set(0, 0, -5);
+  openInMovable(solarSystem, ZeroOffsetMovableController).position.set(
+    0,
+    0,
+    -5
+  );
   (window as any).solarSystem = solarSystem;
   (window as any).scene = scene;
   return solarSystem;

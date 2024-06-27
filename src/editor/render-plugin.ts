@@ -14,6 +14,7 @@ import {
   IntersectionMode,
   onController,
 } from "../interaction";
+import { MovableController } from "../movable-controller";
 import { Editor } from "./editor";
 import {
   CharacterMesh,
@@ -74,10 +75,6 @@ export class RenderPlugin extends Object3D implements PluginValue {
       attributes: true,
       attributeFilter: ["class"],
     });
-  }
-
-  getOffsetInMovable() {
-    return new Vector3(0, this.height(), 0);
   }
 
   height() {
@@ -567,3 +564,9 @@ export const renderPlugin = (options: Options, parent: Editor) =>
     parent.add(plugin);
     return plugin;
   });
+
+export class RenderPluginMovableController extends MovableController<RenderPlugin> {
+  getOffset(): Vector3 {
+    return new Vector3(0, this.child.height(), 0);
+  }
+}

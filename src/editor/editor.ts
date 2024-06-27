@@ -2,7 +2,12 @@ import { javascript } from "@codemirror/lang-javascript";
 import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
 import { Object3D, Object3DEventMap } from "three";
-import { RenderPlugin, renderPlugin } from "./render-plugin";
+import { ForwardingMovableController } from "../movable-controller";
+import {
+  RenderPlugin,
+  RenderPluginMovableController,
+  renderPlugin,
+} from "./render-plugin";
 
 interface EditorEventMap extends Object3DEventMap {
   save: {};
@@ -39,10 +44,6 @@ export class Editor extends Object3D<EditorEventMap> {
     });
   }
 
-  getOffsetInMovable() {
-    return this.renderPlugin.getOffsetInMovable();
-  }
-
   load(document: string) {
     this.view.dispatch({
       changes: [
@@ -59,3 +60,8 @@ export class Editor extends Object3D<EditorEventMap> {
     return this.view.state.doc.toString();
   }
 }
+
+export const EditorMovableController = ForwardingMovableController(
+  (editor: Editor) => editor.renderPlugin,
+  RenderPluginMovableController
+);

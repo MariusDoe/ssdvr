@@ -1,5 +1,6 @@
 import { Plane, Vector3 } from "three";
 import { ClippingGroup } from "./clipping-group";
+import { MovableController } from "./movable-controller";
 import { TickContext } from "./tick";
 
 export class Scroller extends ClippingGroup {
@@ -21,5 +22,11 @@ export class Scroller extends ClippingGroup {
     for (const child of this.children) {
       child.position.y += 0.01 * delta;
     }
+  }
+}
+
+export class ScrollerMovableController extends MovableController<Scroller> {
+  getOffset(): Vector3 {
+    return new Vector3(0, this.child.height, 0);
   }
 }
