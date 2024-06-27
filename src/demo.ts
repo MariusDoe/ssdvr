@@ -6,8 +6,8 @@ import {
   SphereGeometry,
 } from "three";
 import { preserve } from "./hmr/preserve";
-import { openInMovable } from "./movable";
 import { ZeroOffsetMovableController } from "./movable-controller";
+import { openInMovable } from "./open";
 import { scene } from "./scene";
 import { TickContext } from "./tick";
 

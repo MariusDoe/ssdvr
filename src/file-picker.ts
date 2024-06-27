@@ -1,6 +1,6 @@
 import { Editor } from "./editor/editor";
 import { list, read, write } from "./files";
-import { openInMovable } from "./movable";
+import { openInMovable } from "./open";
 import { Scroller, ScrollerMovableController } from "./scroller";
 import { Tree, TreeOptions } from "./tree";
 

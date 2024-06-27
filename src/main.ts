@@ -6,7 +6,7 @@ import { fontFromFlags } from "./editor/fonts";
 import { FilePicker } from "./file-picker";
 import { preserve } from "./hmr/preserve";
 import { materialFromColor } from "./materials";
-import { openInMovable } from "./movable";
+import { openInMovable } from "./open";
 import "./scene";
 import { TreeMovableController } from "./tree";
 import "./vr";

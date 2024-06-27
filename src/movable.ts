@@ -11,7 +11,6 @@ import {
 import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
 import { MovableController } from "./movable-controller";
-import { scene } from "./scene";
 
 const handleGeometry = new CapsuleGeometry(0.1, 2);
 const handleMaterial = new MeshBasicMaterial({
@@ -103,13 +102,3 @@ export class Movable extends Object3D {
     this.position.add(localOffset);
   }
 }
-
-export const openInMovable = <T extends Object3D>(
-  object: T,
-  controllerClass: new (object: T) => MovableController
-) => {
-  const controller = new controllerClass(object);
-  const movable = new Movable(controller);
-  scene.add(movable);
-  return movable;
-};
