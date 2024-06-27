@@ -84,7 +84,8 @@ export class Movable extends Object3D {
     this.controller.applyOffset();
   }
 
-  onDrag({ controller, localOffsetIn, distance, addToDistance }: DragContext) {
+  onDrag(context: DragContext) {
+    const { controller, localOffsetIn } = context;
     const quaternion = new Quaternion();
     const worldHandDirection = new Vector3(0, 0, -1).applyQuaternion(
       controller.hand.getWorldQuaternion(quaternion)
@@ -95,10 +96,10 @@ export class Movable extends Object3D {
     const localOffset = localOffsetIn(this);
     const oldHandComponent = localOffset.dot(localHandDirection);
     const newHandComponent =
-      oldHandComponent * Math.max(1, Math.min(distance ** 1.5, 20));
+      oldHandComponent * Math.max(1, Math.min(context.distance ** 1.5, 20));
     const handComponentDiff = newHandComponent - oldHandComponent;
     localOffset.add(localHandDirection.setLength(handComponentDiff));
-    addToDistance(handComponentDiff);
+    context.distance += handComponentDiff;
     this.position.add(localOffset);
   }
 }

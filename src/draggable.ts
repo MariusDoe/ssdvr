@@ -11,7 +11,6 @@ export type DragContext = DraggableContext & {
   localOffset(): Vector3;
   localOffsetIn(referenceObject: Object3D): Vector3;
   distance: number;
-  addToDistance(distanceOffset: number): void;
 };
 
 export const createDraggable = (
@@ -69,9 +68,11 @@ export const createDraggable = (
       worldOffset,
       localOffset: () => localOffsetIn(object),
       localOffsetIn,
-      distance,
-      addToDistance(distanceOffset: number) {
-        distance += distanceOffset;
+      get distance() {
+        return distance;
+      },
+      set distance(newDistance: number) {
+        distance = newDistance;
       },
     });
     // recompute due to addToDistance
