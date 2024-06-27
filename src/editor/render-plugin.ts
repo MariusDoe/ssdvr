@@ -441,7 +441,7 @@ class Line extends Object3D {
     const { lineHeight } = this.plugin;
     this.background = new Mesh(planeGeometry);
     this.background.scale.y = lineHeight;
-    this.background.position.y = lineHeight / 4;
+    this.background.position.y = -lineHeight / 2;
     this.background.position.z = -2 * RenderPlugin.zOrder;
     this.add(this.background);
     this.updatePosition();
@@ -514,6 +514,7 @@ class TextSpan extends Object3D {
         );
         this.add(mesh);
         this.characters.push(mesh);
+        mesh.position.y = -this.plugin.lineHeight * (3 / 4);
       }
       mesh.position.x = i * this.plugin.glyphAdvance;
     }
@@ -565,7 +566,7 @@ class TextSpan extends Object3D {
         this.background = new Mesh(planeGeometry, material);
         const { lineHeight } = this.plugin;
         this.background.scale.y = lineHeight;
-        this.background.position.y = lineHeight / 4;
+        this.background.position.y = -lineHeight / 2;
         this.background.position.z = -RenderPlugin.zOrder;
         this.add(this.background);
         this.updateBackgroundWidth();
@@ -606,7 +607,7 @@ class SelectionSpan extends Mesh {
     const width = (to === from ? 0.1 : to - from) * glyphAdvance;
     this.scale.x = width;
     this.position.x = from * glyphAdvance + width / 2;
-    this.position.y = (5 / 4 - line) * lineHeight;
+    this.position.y = (-(line - 1) - 1 / 2) * lineHeight;
   }
 }
 
