@@ -102,7 +102,7 @@ export class RenderPlugin
     });
   }
 
-  height() {
+  getHeight() {
     return this.view.state.doc.lines * this.lineHeight;
   }
 
@@ -177,15 +177,17 @@ export class RenderPlugin
     }
   }
 
+  getWidth() {
+    let width = 0;
+    for (const line of this.view.state.doc.iterLines()) {
+      width = Math.max(width, line.length);
+    }
+    return width * this.glyphAdvance;
+  }
+
   updateSize() {
-    const width =
-      Math.max(
-        0,
-        ...[...this.view.contentDOM.querySelectorAll(`.cm-line`)].map(
-          (line) => line.textContent?.length ?? 0
-        )
-      ) * this.glyphAdvance;
-    const height = this.height();
+    const width = this.getWidth();
+    const height = this.getHeight();
     this.interactionMesh.scale.set(width, height, 1);
     this.interactionMesh.position.set(width / 2, -height / 2, 0);
     if (width === this.width) {
@@ -678,7 +680,7 @@ export const renderPlugin = (options: Options, parent: Editor) =>
 
 export class RenderPluginMovableController extends MovableController<RenderPlugin> {
   getOffset(): Vector3 {
-    return new Vector3(0, this.child.height(), 0);
+    return new Vector3(0, this.child.getHeight(), 0);
   }
 }
 
@@ -699,7 +701,7 @@ export class RenderPluginScrollerController extends ScrollerController<RenderPlu
   }
 
   getHeight(): number {
-    return this.child.height();
+    return this.child.getHeight();
   }
 
   mainSelectionChanged(selection: SelectionRange) {
