@@ -34,7 +34,7 @@ export class Tree extends Object3D<TreeEventMap> {
     super();
     this.options = options;
     this.entry = new TreeEntry(content, options);
-    onController("select", this.entry, "recurse", () => {
+    onController("select", this.entry.background, "single", () => {
       this.click();
     });
     this.height = this.entry.height;
@@ -81,19 +81,20 @@ export class TreeMovableController extends MovableController<Tree> {
 
 export class TreeEntry extends Object3D {
   height: number;
+  background: Mesh;
 
   constructor(content: string, options: TreeOptions) {
     super();
     const { lineHeight, glyphAdvance } = measure(options.font, options.size);
     this.height = lineHeight;
     const width = content.length * glyphAdvance;
-    const background = new Mesh(
+    this.background = new Mesh(
       new PlaneGeometry(width, lineHeight),
       options.backgroundMaterial
     );
-    background.position.z = -0.001;
-    background.position.x = width / 2;
-    this.add(background);
+    this.background.position.z = -0.001;
+    this.background.position.x = width / 2;
+    this.add(this.background);
     for (let i = 0; i < content.length; i++) {
       const mesh = getCharacterMesh(
         options.font,
