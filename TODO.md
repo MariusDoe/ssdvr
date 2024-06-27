@@ -36,14 +36,14 @@ demo
   + camera layer + object layer
   - based on render order
   - sub-scene rendering for clipping
-- MovableController
-  - set offset
-- SrollableController
-  - determines height
-  - moves primary selection into view
-  - notifies Editor of visibility change
-    - only render visible lines (THREE.js add/remove)
-- scroll handle
++ MovableController
+  + set offset
++ SrollableController
+  + determines height
+  + moves primary selection into view
+  + notifies Editor of visibility change
+    + only render visible lines (THREE.js add/remove)
++ scroll handle
 - iframe using HTMLCanvas for (THREE.js) documentation
 - constraint: interaction tweaking only within VR
 - controller dragging: z axis multiplier
@@ -54,7 +54,7 @@ demo
 - Star Wars: use the force
 - Editor optimization
   - check whether parent is Scrollable
-  - check for cursor movements only
+  + check for cursor movements only
 - name for movables
 - movable rotation modes via button in handle
   - absolute lock
