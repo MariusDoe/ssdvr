@@ -164,7 +164,7 @@ export class RenderPlugin
 
   localPositionToPos(position: Vector3) {
     const column = Math.round(position.x / this.glyphAdvance);
-    const lineNumber = Math.round(-position.y / this.lineHeight);
+    const lineNumber = Math.round(-position.y / this.lineHeight - 1 / 2);
     const line = this.view.state.doc.line(
       clamp(lineNumber + 1, 1, this.view.state.doc.lines)
     );
