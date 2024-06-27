@@ -17,6 +17,7 @@ import {
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
 import { clamp } from "three/src/math/MathUtils.js";
+import { ClippingGroup, getContainingClippingGroup } from "../clipping-group";
 import {
   InteractionContext,
   IntersectionMode,
@@ -168,6 +169,12 @@ export class RenderPlugin
     return Math.min(line.from + column, line.to);
   }
 
+  updateVisibility(clippingGroup: ClippingGroup) {
+    for (const line of this.lineMap.values()) {
+      line.updateVisibility(clippingGroup);
+    }
+  }
+
   updateSize() {
     const width =
       Math.max(
@@ -277,7 +284,6 @@ export class RenderPlugin
     }
     console.log("adding line", element.textContent);
     const line = new Line(element, this);
-    this.add(line);
     this.lineMap.set(element, line);
     this.updateLinePositions = true;
     this.sizeUpdate = true;
@@ -456,6 +462,37 @@ class Line extends Object3D {
     this.updatePosition();
     this.updateWidth();
     this.updateMaterial();
+    this.plugin.add(this);
+    const clippingGroup = getContainingClippingGroup(this);
+    if (clippingGroup) {
+      this.updateVisibility(clippingGroup);
+    }
+  }
+
+  isVisible(clippingGroup: ClippingGroup) {
+    const { lineHeight, width } = this.plugin;
+    const worldPosition = this.plugin.localToWorld(this.position.clone());
+    const positions = [
+      worldPosition,
+      worldPosition.clone().add(new Vector3(width, 0, 0)),
+      worldPosition.clone().add(new Vector3(0, -lineHeight, 0)),
+      worldPosition.clone().add(new Vector3(width, -lineHeight, 0)),
+    ];
+    return positions.some((position) => !clippingGroup.isClipped(position));
+  }
+
+  updateVisibility(clippingGroup: ClippingGroup) {
+    if (this.isVisible(clippingGroup)) {
+      if (!this.parent) {
+        this.plugin.add(this);
+        console.log("showing line", this.element.textContent);
+      }
+    } else {
+      if (this.parent) {
+        this.removeFromParent();
+        console.log("hiding line", this.element.textContent);
+      }
+    }
   }
 
   updatePosition() {
@@ -652,6 +689,7 @@ export class RenderPluginScrollerController extends ScrollerController<RenderPlu
     this.scroller.addEventListener("scrolled", ({ position }) => {
       this.scrolled(position);
     });
+    this.child.updateVisibility(this.scroller);
   }
 
   getHandleXOffset(): number {
@@ -670,5 +708,6 @@ export class RenderPluginScrollerController extends ScrollerController<RenderPlu
 
   scrolled(position: number) {
     this.child.scrollLocalPositionIntoView(new Vector3(0, -position, 0));
+    this.child.updateVisibility(this.scroller);
   }
 }

@@ -1,4 +1,11 @@
-import { Group, Light, Object3DEventMap, Plane } from "three";
+import {
+  Group,
+  Light,
+  Object3D,
+  Object3DEventMap,
+  Plane,
+  Vector3,
+} from "three";
 import { firstClippingGroupLayer, lightsLayer } from "./layers";
 import { sceneMutationObserver } from "./tree-mutation-observer";
 import { isAncestor } from "./utils";
@@ -20,6 +27,12 @@ export class ClippingGroup<
 > extends Group<TEventMap> {
   layer = -1;
   clippingPlanes: Plane[] = [];
+
+  isClipped(worldPosition: Vector3) {
+    return this.clippingPlanes.some(
+      (plane) => plane.normal.dot(worldPosition) < -plane.constant
+    );
+  }
 }
 
 sceneMutationObserver.addEventListener("added", ({ object }) => {
@@ -45,3 +58,14 @@ sceneMutationObserver.addEventListener("removed", ({ object }) => {
     clippingGroups.delete(object);
   }
 });
+
+export const getContainingClippingGroup = (object: Object3D) => {
+  let current: Object3D | null = object;
+  while (current) {
+    if (current instanceof ClippingGroup) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return null;
+};
