@@ -75,7 +75,7 @@ export class Tree extends Object3D<TreeEventMap> {
 
 export class TreeMovableController extends MovableController<Tree> {
   getOffset(): Vector3 {
-    return new Vector3(0, this.child.height - this.child.entry.height / 2, 0);
+    return new Vector3(0, this.child.height, 0);
   }
 }
 
@@ -92,8 +92,7 @@ export class TreeEntry extends Object3D {
       new PlaneGeometry(width, lineHeight),
       options.backgroundMaterial
     );
-    this.background.position.z = -0.001;
-    this.background.position.x = width / 2;
+    this.background.position.set(width / 2, -lineHeight / 2, -0.001);
     this.add(this.background);
     for (let i = 0; i < content.length; i++) {
       const mesh = getCharacterMesh(
@@ -103,6 +102,7 @@ export class TreeEntry extends Object3D {
         options.size
       );
       mesh.position.x = i * glyphAdvance;
+      mesh.position.y = -lineHeight * (3 / 4);
       this.add(mesh);
     }
   }
