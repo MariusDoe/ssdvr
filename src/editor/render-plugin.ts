@@ -65,9 +65,10 @@ export class RenderPlugin
   // pending updates
   scheduledMutations: MutationRecord[] = [];
   updateLinePositions = false;
-  widthUpdate = false;
+  sizeUpdate = false;
   linesToUpdate = new Set<Line>();
   styleUpdates = new Set<Node>();
+  interactionMesh: Mesh;
 
   static zOrder = 0.001;
 
@@ -76,11 +77,14 @@ export class RenderPlugin
     const { lineHeight, glyphAdvance } = measure(fonts[0], this.options.size);
     this.lineHeight = lineHeight;
     this.glyphAdvance = glyphAdvance;
-    onController("select", this, "recurse", (context) => {
+    this.interactionMesh = new Mesh(planeGeometry);
+    this.interactionMesh.visible = false;
+    this.add(this.interactionMesh);
+    onController("select", this.interactionMesh, "single", (context) => {
       this.onClick(context);
     });
     this.focus();
-    this.updateWidth();
+    this.updateSize();
     this.addNodesBelow(this.view.contentDOM);
     this.runUpdates();
     this.mutationObserver = new MutationObserver((mutations) => {
@@ -164,7 +168,7 @@ export class RenderPlugin
     return Math.min(line.from + column, line.to);
   }
 
-  updateWidth() {
+  updateSize() {
     const width =
       Math.max(
         0,
@@ -172,6 +176,9 @@ export class RenderPlugin
           (line) => line.textContent?.length ?? 0
         )
       ) * this.glyphAdvance;
+    const height = this.height();
+    this.interactionMesh.scale.set(width, height, 1);
+    this.interactionMesh.position.set(width / 2, -height / 2, 0);
     if (width === this.width) {
       return;
     }
@@ -273,6 +280,7 @@ export class RenderPlugin
     this.add(line);
     this.lineMap.set(element, line);
     this.updateLinePositions = true;
+    this.sizeUpdate = true;
   }
 
   removeNodesBelow(root: Node) {
@@ -324,6 +332,7 @@ export class RenderPlugin
     this.lineMap.delete(element);
     this.linesToUpdate.delete(line);
     this.updateLinePositions = true;
+    this.sizeUpdate = true;
   }
 
   updateText(node: Node) {
@@ -354,9 +363,9 @@ export class RenderPlugin
       this.lineMap.get(node as Element)?.updateMaterial();
     }
     this.styleUpdates.clear();
-    if (this.widthUpdate) {
-      this.updateWidth();
-      this.widthUpdate = false;
+    if (this.sizeUpdate) {
+      this.updateSize();
+      this.sizeUpdate = false;
     }
   }
 
@@ -497,7 +506,7 @@ class TextSpan extends Object3D {
     console.log("updating span", text);
     const unused = this.characters.slice();
     if (text.length !== unused.length) {
-      this.plugin.widthUpdate = true;
+      this.plugin.sizeUpdate = true;
     }
     for (let i = 0; i < text.length; i++) {
       const character = text[i];
