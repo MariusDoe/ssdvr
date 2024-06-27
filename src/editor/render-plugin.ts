@@ -50,6 +50,8 @@ interface RenderPluginEventMap extends Object3DEventMap {
   };
 }
 
+const debug = false;
+
 export class RenderPlugin
   extends Object3D<RenderPluginEventMap>
   implements PluginValue
@@ -105,10 +107,10 @@ export class RenderPlugin
   }
 
   update(update: ViewUpdate) {
-    console.log("requestMeasure");
+    if (debug) console.log("requestMeasure");
     this.view.requestMeasure({
       read: () => {
-        console.log("measure");
+        if (debug) console.log("measure");
         this.handleMutations(this.scheduledMutations);
         this.scheduledMutations = [];
       },
@@ -196,7 +198,7 @@ export class RenderPlugin
   }
 
   scheduleMutations(mutations: MutationRecord[]) {
-    console.log("scheduling mutations", mutations);
+    if (debug) console.log("scheduling mutations", mutations);
     this.scheduledMutations.push(...mutations);
   }
 
@@ -208,7 +210,7 @@ export class RenderPlugin
   }
 
   handleMutation(mutation: MutationRecord) {
-    console.log("handling mutation", mutation);
+    if (debug) console.log("handling mutation", mutation);
     switch (mutation.type) {
       case "attributes":
         this.updateStyle(mutation.target);
@@ -267,7 +269,7 @@ export class RenderPlugin
     if (!lineNode) {
       return;
     }
-    console.log("adding span", node.textContent);
+    if (debug) console.log("adding span", node.textContent);
     const textSpan = new TextSpan(node, this);
     this.textSpanMap.set(node, textSpan);
 
@@ -282,7 +284,7 @@ export class RenderPlugin
     if (this.lineMap.has(element)) {
       return;
     }
-    console.log("adding line", element.textContent);
+    if (debug) console.log("adding line", element.textContent);
     const line = new Line(element, this);
     this.lineMap.set(element, line);
     this.updateLinePositions = true;
@@ -315,7 +317,7 @@ export class RenderPlugin
   }
 
   removeTextSpan(textSpan: TextSpan) {
-    console.log("removing span", textSpan.node.textContent);
+    if (debug) console.log("removing span", textSpan.node.textContent);
     if (textSpan.parent) {
       this.linesToUpdate.add(textSpan.parent as Line);
     }
@@ -328,7 +330,7 @@ export class RenderPlugin
     if (!line) {
       return;
     }
-    console.log("removing line", line.element.textContent);
+    if (debug) console.log("removing line", line.element.textContent);
     line.removeFromParent();
     for (const child of line.children) {
       if (child instanceof TextSpan) {
@@ -485,18 +487,18 @@ class Line extends Object3D {
     if (this.isVisible(clippingGroup)) {
       if (!this.parent) {
         this.plugin.add(this);
-        console.log("showing line", this.element.textContent);
+        if (debug) console.log("showing line", this.element.textContent);
       }
     } else {
       if (this.parent) {
         this.removeFromParent();
-        console.log("hiding line", this.element.textContent);
+        if (debug) console.log("hiding line", this.element.textContent);
       }
     }
   }
 
   updatePosition() {
-    console.log("moving line", this.element.textContent);
+    if (debug) console.log("moving line", this.element.textContent);
     const pos = this.plugin.view.posAtDOM(this.element);
     this.position.y = this.plugin.posToLocalPosition(pos).y;
   }
@@ -533,14 +535,14 @@ class TextSpan extends Object3D {
   }
 
   updatePosition() {
-    console.log("moving span", this.node.textContent);
+    if (debug) console.log("moving span", this.node.textContent);
     const pos = this.plugin.view.posAtDOM(this.node);
     this.position.x = this.plugin.posToLocalPosition(pos).x;
   }
 
   updateText() {
     const text = this.node.textContent ?? "";
-    console.log("updating span", text);
+    if (debug) console.log("updating span", text);
     const unused = this.characters.slice();
     if (text.length !== unused.length) {
       this.plugin.sizeUpdate = true;
