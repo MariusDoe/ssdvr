@@ -63,3 +63,19 @@ demo
   - look at user always
   - look at origin always
 + file picker bug: after closing and reopening parent, cannot open children
+
+- benchmarkings
+  - same setup except for multi-pass & clipping
+  - without line clipping
+  - ...
+
+- presentation
+  - show live coding
+    - spawn breadcrumbs of planets
+    - show velocity vectors as simple lines
+    - light inside of sun
+    - primitive button that toggles room light
+  - open file picker in Scroller
+  - open in front of hands, not feet
+  - demo colors, shading + lights
+  - ground plane, surroundings
