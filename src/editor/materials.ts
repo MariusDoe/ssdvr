@@ -25,6 +25,7 @@ export const backgroundMaterialFromStyles = (styles: CSSStyleDeclaration[]) =>
             ] as const
         ),
       ]
+        .reverse()
         .reduce((a, [b, alpha_b]) => a.lerp(b, alpha_b), new Color("white"))
         .getHexString()
   );
