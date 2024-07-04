@@ -11,13 +11,13 @@ export const camera = new PerspectiveCamera(
   1000
 );
 
-const render = (layer: number, clippingPlanes: Plane[]) => {
+const render = (layer: number, clippingPlanes: readonly Plane[]) => {
   const xrCamera = renderer.xr.getCamera();
   for (const renderedCamera of [camera, xrCamera, ...xrCamera.cameras]) {
     renderedCamera.layers.set(layer);
     renderedCamera.layers.enable(lightsLayer);
   }
-  renderer.clippingPlanes = clippingPlanes;
+  renderer.clippingPlanes = clippingPlanes as Plane[];
   renderer.render(scene, camera);
 };
 
@@ -30,7 +30,7 @@ renderer.setAnimationLoop(() => {
   renderer.clear();
   render(defaultLayer, []);
   for (const clippingGroup of clippingGroups) {
-    render(clippingGroup.layer, clippingGroup.clippingPlanes);
+    render(clippingGroup.layer, clippingGroup.ancestorClippingPlanes);
   }
 });
 document.body.appendChild(renderer.domElement);
