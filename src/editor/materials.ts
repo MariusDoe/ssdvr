@@ -16,15 +16,14 @@ const colorAlpha = (color: string) => {
 export const backgroundMaterialFromStyles = (styles: CSSStyleDeclaration[]) =>
   materialFromColor(
     "#" +
-      [
-        ...styles.map(
+      styles
+        .map(
           (style) =>
             [
               new Color(style.backgroundColor),
               colorAlpha(style.backgroundColor),
             ] as const
-        ),
-      ]
+        )
         .reverse()
         .reduce((a, [b, alpha_b]) => a.lerp(b, alpha_b), new Color("white"))
         .getHexString()
