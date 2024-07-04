@@ -28,7 +28,7 @@ export class TextSpan extends Object3D {
     if (debug) console.log("updating span", text);
     const unused = this.characters.slice();
     if (text.length !== unused.length) {
-      this.plugin.sizeUpdate = true;
+      this.widthChanged();
     }
     for (let i = 0; i < text.length; i++) {
       const character = text[i];
@@ -56,6 +56,10 @@ export class TextSpan extends Object3D {
       (character) => !unused.includes(character)
     );
     this.updateBackgroundWidth();
+  }
+
+  widthChanged() {
+    this.plugin.sizeUpdate = true;
   }
 
   updateMaterial() {

@@ -56,8 +56,12 @@ export class Line extends Object3D {
     this.position.y = this.plugin.posToLocalPosition(pos).y;
   }
 
+  getWidth() {
+    return this.plugin.width;
+  }
+
   updateWidth() {
-    const { width } = this.plugin;
+    const width = this.getWidth();
     this.background.scale.x = width;
     this.background.position.x = width / 2;
   }

@@ -21,6 +21,9 @@ import {
 } from "../interaction";
 import { MovableController } from "../movable-controller";
 import { ScrollerController } from "../scroller-controller";
+import { Autocomplete } from "./autocomplete";
+import { AutocompleteOption } from "./autocomplete-option";
+import { AutocompleteTextSpan } from "./autocomplete-text-span";
 import { Editor } from "./editor";
 import { fonts, measure } from "./fonts";
 import { Line } from "./line";
@@ -40,6 +43,10 @@ interface RenderPluginEventMap extends Object3DEventMap {
   };
 }
 
+interface UpdatableMaterial {
+  updateMaterial(): void;
+}
+
 export const debug = false;
 
 export class RenderPlugin
@@ -51,6 +58,9 @@ export class RenderPlugin
   glyphAdvance: number;
   lineMap = new Map<Element, Line>();
   textSpanMap = new Map<Text, TextSpan>();
+  autocomplete: Autocomplete | null = null;
+  autocompleteOptionMap = new Map<Element, AutocompleteOption>();
+  autocompleteTextSpanMap = new Map<Text, AutocompleteTextSpan>();
   styleCache = new Map<Element, CSSStyleDeclaration>();
   selectionSpans: SelectionSpan[] = [];
   width = 0;
@@ -59,8 +69,9 @@ export class RenderPlugin
   scheduledMutations: MutationRecord[] = [];
   updateLinePositions = false;
   sizeUpdate = false;
+  autocompleteUpdate = false;
   linesToUpdate = new Set<Line>();
-  styleUpdates = new Set<Node>();
+  styleUpdates = new Set<UpdatableMaterial>();
   interactionMesh: Mesh;
 
   static zOrder = 0.001;
@@ -78,17 +89,17 @@ export class RenderPlugin
     });
     this.focus();
     this.updateSize();
-    this.addNodesBelow(this.view.contentDOM);
+    this.addNodesBelow(this.view.dom);
     this.runUpdates();
     this.mutationObserver = new MutationObserver((mutations) => {
       this.scheduleMutations(mutations);
     });
-    this.mutationObserver.observe(this.view.contentDOM, {
+    this.mutationObserver.observe(this.view.dom, {
       subtree: true,
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["class"],
+      attributeFilter: ["class", "aria-selected"],
     });
   }
 
@@ -107,6 +118,7 @@ export class RenderPlugin
     });
     if (update.selectionSet) {
       this.updateSelections();
+      this.autocomplete?.updatePosition();
       this.dispatchEvent({
         type: "mainSelectionChanged",
         selection: this.view.state.selection.main,
@@ -221,17 +233,25 @@ export class RenderPlugin
     }
   }
 
+  updatableMaterial(node: Node): UpdatableMaterial | null {
+    return (
+      this.textSpanMap.get(node as Text) ??
+      this.lineMap.get(node as Element) ??
+      this.autocompleteOptionMap.get(node as Element) ??
+      this.autocompleteTextSpanMap.get(node as Text) ??
+      null
+    );
+  }
+
   updateStyle(root: Node) {
     if (!(root instanceof Element)) {
       return;
     }
     this.styleCache.set(root, getComputedStyle(root));
     traverse(root, (node) => {
-      if (
-        node.parentElement === root ||
-        (node instanceof Element && node.classList.contains("cm-line"))
-      ) {
-        this.styleUpdates.add(node);
+      const updatableMaterial = this.updatableMaterial(node);
+      if (updatableMaterial) {
+        this.styleUpdates.add(updatableMaterial);
       }
     });
   }
@@ -248,12 +268,35 @@ export class RenderPlugin
   addNode(node: Node) {
     if (node instanceof Text) {
       this.addText(node);
-    } else if (node instanceof Element && node.classList.contains("cm-line")) {
-      this.addLine(node);
+    } else if (node instanceof Element) {
+      this.addElement(node);
     }
   }
 
   addText(node: Text) {
+    const parent = node.parentElement!;
+    if (parent.closest(".cm-line")) {
+      this.addTextSpan(node);
+    } else if (parent.closest(".cm-completionLabel")) {
+      this.addAutocompleteTextSpan(node);
+    }
+  }
+
+  addElement(element: Element) {
+    if (element.classList.contains("cm-line")) {
+      this.addLine(element);
+    } else if (element.classList.contains("cm-tooltip-autocomplete")) {
+      this.addAutocomplete(element);
+    } else if (
+      element.parentElement!.parentElement!.classList.contains(
+        "cm-tooltip-autocomplete"
+      )
+    ) {
+      this.addAutocompleteOption(element);
+    }
+  }
+
+  addTextSpan(node: Text) {
     if (this.textSpanMap.has(node)) {
       return;
     }
@@ -283,6 +326,49 @@ export class RenderPlugin
     this.sizeUpdate = true;
   }
 
+  addAutocomplete(element: Element) {
+    if (this.autocomplete) {
+      return this.autocomplete;
+    }
+    if (debug) console.log("adding autocomplete");
+    this.autocomplete = new Autocomplete(element, this);
+    this.add(this.autocomplete);
+    this.autocomplete.updatePosition();
+    return this.autocomplete;
+  }
+
+  addAutocompleteOption(element: Element) {
+    if (this.autocompleteOptionMap.has(element)) {
+      return;
+    }
+    const autocompleteElement = element.closest(".cm-tooltip-autocomplete");
+    if (!autocompleteElement) {
+      return;
+    }
+    if (debug) console.log("adding autocomplete option", element.textContent);
+    const autocomplete = this.addAutocomplete(autocompleteElement);
+    const option = new AutocompleteOption(element, this);
+    this.autocompleteOptionMap.set(element, option);
+    autocomplete.add(option);
+    option.updateMaterial();
+    this.autocompleteUpdate = true;
+  }
+
+  addAutocompleteTextSpan(node: Text) {
+    const optionElement = node.parentElement!.closest("[role=option]");
+    if (!optionElement) {
+      return;
+    }
+    if (debug) console.log("adding autocomplete span", node.textContent);
+    const textSpan = new AutocompleteTextSpan(node, this);
+    this.autocompleteTextSpanMap.set(node, textSpan);
+
+    this.addAutocompleteOption(optionElement);
+    const option = this.autocompleteOptionMap.get(optionElement)!;
+    option.add(textSpan);
+    this.autocompleteUpdate = true;
+  }
+
   removeNodesBelow(root: Node) {
     traverse(root, (node) => {
       this.removeNode(node);
@@ -292,20 +378,28 @@ export class RenderPlugin
   removeNode(node: Node) {
     if (node instanceof Text) {
       this.removeText(node);
-    } else if (
-      node instanceof HTMLElement &&
-      node.classList.contains("cm-line")
-    ) {
-      this.removeLine(node);
+    } else if (node instanceof HTMLElement) {
+      this.removeElement(node);
     }
   }
 
   removeText(node: Text) {
     const textSpan = this.textSpanMap.get(node);
-    if (!textSpan) {
+    if (textSpan) {
+      this.removeTextSpan(textSpan);
       return;
     }
-    this.removeTextSpan(textSpan);
+    const autocompleteTextSpan = this.autocompleteTextSpanMap.get(node);
+    if (autocompleteTextSpan) {
+      this.removeAutocompleteTextSpan(autocompleteTextSpan);
+      return;
+    }
+  }
+
+  removeElement(element: HTMLElement) {
+    this.removeLine(element);
+    this.removeAutocomplete(element);
+    this.removeAutocompleteOption(element);
   }
 
   removeTextSpan(textSpan: TextSpan) {
@@ -335,16 +429,72 @@ export class RenderPlugin
     this.sizeUpdate = true;
   }
 
+  removeAutocomplete(element: Element) {
+    if (!this.autocomplete) {
+      return;
+    }
+    if (this.autocomplete.element !== element) {
+      return;
+    }
+    if (debug) console.log("removing autocomplete");
+    this.autocomplete.removeFromParent();
+    this.autocomplete = null;
+  }
+
+  removeAutocompleteOption(element: Element) {
+    const option = this.autocompleteOptionMap.get(element);
+    if (!option) {
+      return;
+    }
+    if (debug) console.log("removing autocomplete option", element.textContent);
+    option.removeFromParent();
+    for (const child of option.children) {
+      if (child instanceof AutocompleteTextSpan) {
+        this.removeAutocompleteTextSpan(child);
+      }
+    }
+    this.autocompleteOptionMap.delete(element);
+    this.autocompleteUpdate = true;
+  }
+
+  removeAutocompleteTextSpan(textSpan: AutocompleteTextSpan) {
+    textSpan.removeFromParent();
+    if (debug)
+      console.log("removing autocomplete span", textSpan.node.textContent);
+    this.autocompleteTextSpanMap.delete(textSpan.node);
+    this.autocompleteUpdate = true;
+  }
+
   updateText(node: Node) {
     if (!(node instanceof Text)) {
       return;
     }
     const textSpan = this.textSpanMap.get(node);
-    if (!textSpan) {
+    if (textSpan) {
+      textSpan.updateText();
+      this.linesToUpdate.add(textSpan.parent as Line);
       return;
     }
-    textSpan.updateText();
-    this.linesToUpdate.add(textSpan.parent as Line);
+    const autocompleteTextSpan = this.autocompleteTextSpanMap.get(node);
+    if (autocompleteTextSpan) {
+      autocompleteTextSpan.updateText();
+      this.autocompleteUpdate = true;
+      return;
+    }
+  }
+
+  updateAutocomplete() {
+    if (!this.autocomplete) {
+      return;
+    }
+    this.autocomplete.updateWidth();
+    for (const option of this.autocomplete.children) {
+      if (option instanceof AutocompleteOption) {
+        option.updatePosition();
+        option.updateWidth();
+        option.updateTextSpanPositions();
+      }
+    }
   }
 
   runUpdates() {
@@ -358,14 +508,17 @@ export class RenderPlugin
       line.updateTextSpanPositions();
     }
     this.linesToUpdate.clear();
-    for (const node of this.styleUpdates) {
-      this.textSpanMap.get(node as Text)?.updateMaterial();
-      this.lineMap.get(node as Element)?.updateMaterial();
+    for (const updatableMaterial of this.styleUpdates) {
+      updatableMaterial.updateMaterial();
     }
     this.styleUpdates.clear();
     if (this.sizeUpdate) {
       this.updateSize();
       this.sizeUpdate = false;
+    }
+    if (this.autocompleteUpdate) {
+      this.updateAutocomplete();
+      this.autocompleteUpdate = false;
     }
   }
 
@@ -427,7 +580,7 @@ export class RenderPlugin
 
   *ancestorsOf(element: Element) {
     let current = element;
-    const root = this.view.contentDOM;
+    const root = this.view.dom;
     while (current !== root) {
       yield current;
       current = current.parentElement!;
