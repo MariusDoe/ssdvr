@@ -6,18 +6,14 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import {
-  Color,
-  Material,
   Mesh,
-  MeshBasicMaterial,
   Object3D,
   Object3DEventMap,
   PlaneGeometry,
   Vector3,
 } from "three";
-import { Font } from "three/examples/jsm/Addons.js";
 import { clamp } from "three/src/math/MathUtils.js";
-import { ClippingGroup, getContainingClippingGroup } from "../clipping-group";
+import { ClippingGroup } from "../clipping-group";
 import {
   InteractionContext,
   IntersectionMode,
@@ -26,23 +22,17 @@ import {
 import { MovableController } from "../movable-controller";
 import { ScrollerController } from "../scroller-controller";
 import { Editor } from "./editor";
-import {
-  CharacterMesh,
-  fontFromStyle,
-  fonts,
-  getCharacterMesh,
-  measure,
-} from "./fonts";
-import {
-  backgroundMaterialFromStyles,
-  foregroundMaterialFromStyle,
-} from "./materials";
+import { fonts, measure } from "./fonts";
+import { Line } from "./line";
+import { backgroundMaterialFromStyles } from "./materials";
+import { SelectionSpan } from "./selection-span";
+import { TextSpan } from "./text-span";
 
 interface Options {
   size: number;
 }
 
-const planeGeometry = new PlaneGeometry();
+export const planeGeometry = new PlaneGeometry();
 
 interface RenderPluginEventMap extends Object3DEventMap {
   mainSelectionChanged: {
@@ -50,7 +40,7 @@ interface RenderPluginEventMap extends Object3DEventMap {
   };
 }
 
-const debug = false;
+export const debug = false;
 
 export class RenderPlugin
   extends Object3D<RenderPluginEventMap>
@@ -449,215 +439,6 @@ export class RenderPlugin
       this.styleFor(parent)
     );
     return backgroundMaterialFromStyles(parentStyles);
-  }
-}
-
-class Line extends Object3D {
-  background: Mesh;
-
-  constructor(public element: Element, public plugin: RenderPlugin) {
-    super();
-    const { lineHeight } = this.plugin;
-    this.background = new Mesh(planeGeometry);
-    this.background.scale.y = lineHeight;
-    this.background.position.y = -lineHeight / 2;
-    this.background.position.z = -2 * RenderPlugin.zOrder;
-    this.add(this.background);
-    this.updatePosition();
-    this.updateWidth();
-    this.updateMaterial();
-    this.plugin.add(this);
-    const clippingGroup = getContainingClippingGroup(this);
-    if (clippingGroup) {
-      this.updateVisibility(clippingGroup);
-    }
-  }
-
-  isVisible(clippingGroup: ClippingGroup) {
-    const { lineHeight, width } = this.plugin;
-    const worldPosition = this.plugin.localToWorld(this.position.clone());
-    const positions = [
-      worldPosition,
-      worldPosition.clone().add(new Vector3(width, 0, 0)),
-      worldPosition.clone().add(new Vector3(0, -lineHeight, 0)),
-      worldPosition.clone().add(new Vector3(width, -lineHeight, 0)),
-    ];
-    return positions.some((position) => !clippingGroup.isClipped(position));
-  }
-
-  updateVisibility(clippingGroup: ClippingGroup) {
-    if (this.isVisible(clippingGroup)) {
-      if (!this.parent) {
-        this.plugin.add(this);
-        if (debug) console.log("showing line", this.element.textContent);
-      }
-    } else {
-      if (this.parent) {
-        this.removeFromParent();
-        if (debug) console.log("hiding line", this.element.textContent);
-      }
-    }
-  }
-
-  updatePosition() {
-    if (debug) console.log("moving line", this.element.textContent);
-    const pos = this.plugin.view.posAtDOM(this.element);
-    this.position.y = this.plugin.posToLocalPosition(pos).y;
-  }
-
-  updateWidth() {
-    const { width } = this.plugin;
-    this.background.scale.x = width;
-    this.background.position.x = width / 2;
-  }
-
-  updateMaterial() {
-    this.background.material = this.plugin.backgroundMaterialFor(this.element);
-  }
-
-  updateTextSpanPositions() {
-    for (const child of this.children) {
-      if (child instanceof TextSpan) {
-        child.updatePosition();
-      }
-    }
-  }
-}
-
-class TextSpan extends Object3D {
-  characters: CharacterMesh[] = [];
-  font!: Font;
-  foregroundMaterial!: Material;
-  background: Mesh | null = null;
-
-  constructor(public node: Text, public plugin: RenderPlugin) {
-    super();
-    this.updatePosition();
-    this.updateMaterial();
-  }
-
-  updatePosition() {
-    if (debug) console.log("moving span", this.node.textContent);
-    const pos = this.plugin.view.posAtDOM(this.node);
-    this.position.x = this.plugin.posToLocalPosition(pos).x;
-  }
-
-  updateText() {
-    const text = this.node.textContent ?? "";
-    if (debug) console.log("updating span", text);
-    const unused = this.characters.slice();
-    if (text.length !== unused.length) {
-      this.plugin.sizeUpdate = true;
-    }
-    for (let i = 0; i < text.length; i++) {
-      const character = text[i];
-      const index = unused.findIndex((mesh) => mesh.character === character);
-      let mesh: CharacterMesh;
-      if (index >= 0) {
-        [mesh] = unused.splice(index, 1);
-      } else {
-        mesh = getCharacterMesh(
-          this.font,
-          character,
-          this.foregroundMaterial,
-          this.plugin.options.size
-        );
-        this.add(mesh);
-        this.characters.push(mesh);
-        mesh.position.y = -this.plugin.lineHeight * (3 / 4);
-      }
-      mesh.position.x = i * this.plugin.glyphAdvance;
-    }
-    for (const character of unused) {
-      this.remove(character);
-    }
-    this.characters = this.characters.filter(
-      (character) => !unused.includes(character)
-    );
-    this.updateBackgroundWidth();
-  }
-
-  updateMaterial() {
-    this.updateForegroundMaterial();
-    this.updateBackgroundMaterial();
-  }
-
-  updateForegroundMaterial() {
-    const style = this.plugin.styleFor(this.node.parentElement!);
-    const material = foregroundMaterialFromStyle(style);
-    const font = fontFromStyle(style);
-    if (font !== this.font) {
-      this.font = font;
-      this.foregroundMaterial = material;
-      this.clear();
-      this.updateText();
-    } else if (material !== this.foregroundMaterial) {
-      this.foregroundMaterial = material;
-      for (const child of this.characters) {
-        child.material = material;
-      }
-    }
-  }
-
-  updateBackgroundMaterial() {
-    if (!this.parent) {
-      return;
-    }
-    let material: Material | null = this.plugin.backgroundMaterialFor(
-      this.node.parentElement!
-    );
-    if (material == (this.parent as Line).background.material) {
-      material = null;
-    }
-    if (material) {
-      if (this.background) {
-        this.background.material = material;
-      } else {
-        this.background = new Mesh(planeGeometry, material);
-        const { lineHeight } = this.plugin;
-        this.background.scale.y = lineHeight;
-        this.background.position.y = -lineHeight / 2;
-        this.background.position.z = -RenderPlugin.zOrder;
-        this.add(this.background);
-        this.updateBackgroundWidth();
-      }
-    } else {
-      if (this.background) {
-        this.remove(this.background);
-        this.background = null;
-      }
-    }
-  }
-
-  updateBackgroundWidth() {
-    if (!this.background) {
-      return;
-    }
-    const width = this.characters.length * this.plugin.glyphAdvance;
-    this.background.scale.x = width;
-    this.background.position.x = width / 2;
-  }
-}
-
-class SelectionSpan extends Mesh {
-  static material = new MeshBasicMaterial({
-    color: new Color(0, 0.5, 1),
-    transparent: true,
-    opacity: 0.5,
-  });
-
-  constructor(public plugin: RenderPlugin) {
-    super(planeGeometry, SelectionSpan.material);
-    this.scale.y = this.plugin.lineHeight;
-    this.position.z = RenderPlugin.zOrder;
-  }
-
-  updatePosition(line: number, from: number, to: number) {
-    const { glyphAdvance, lineHeight } = this.plugin;
-    const width = (to === from ? 0.1 : to - from) * glyphAdvance;
-    this.scale.x = width;
-    this.position.x = from * glyphAdvance + width / 2;
-    this.position.y = (-(line - 1) - 1 / 2) * lineHeight;
   }
 }
 
