@@ -1,5 +1,7 @@
-import { Editor, EditorScrollerController } from "./editor/editor";
-import { list, read, write } from "./files";
+import { EditorScrollerController } from "./editor/editor";
+import { FileEditor } from "./editor/file-editor";
+import { TypeScriptEditor } from "./editor/typescript-editor";
+import { list } from "./files";
 import { openInMovableScroller } from "./open";
 import { Tree, TreeOptions } from "./tree";
 
@@ -35,13 +37,11 @@ class FileTree extends Tree {
   }
 
   async openEditor() {
-    const editor = new Editor();
-    openInMovableScroller(editor, 0.4, EditorScrollerController);
     const path = this.getPath();
-    editor.load(await read(path));
-    editor.addEventListener("save", () => {
-      write(path, editor.getDocument());
-    });
+    const editor = path.endsWith(".ts")
+      ? new TypeScriptEditor(path)
+      : new FileEditor(path);
+    openInMovableScroller(editor, 0.4, EditorScrollerController);
   }
 
   async loadEntries() {

@@ -1,4 +1,3 @@
-import { javascript } from "@codemirror/lang-javascript";
 import { keymap } from "@codemirror/view";
 import { EditorView, basicSetup } from "codemirror";
 import { Object3D, Object3DEventMap } from "three";
@@ -24,26 +23,31 @@ export class Editor extends Object3D<EditorEventMap> {
     this.view = new EditorView({
       doc: initialDocument,
       parent: document.body,
-      extensions: [
-        basicSetup,
-        javascript({ typescript: true }),
-        renderPlugin(
-          {
-            size: 0.01,
-          },
-          this
-        ),
-        keymap.of([
-          {
-            key: "Ctrl-s",
-            run: () => {
-              this.dispatchEvent({ type: "save" });
-              return true;
-            },
-          },
-        ]),
-      ],
+      extensions: [...this.getExtensions()],
     });
+  }
+
+  *getExtensions() {
+    yield basicSetup;
+    yield renderPlugin(
+      {
+        size: 0.01,
+      },
+      this
+    );
+    yield keymap.of([
+      {
+        key: "Ctrl-s",
+        run: () => {
+          this.onSave();
+          return true;
+        },
+      },
+    ]);
+  }
+
+  onSave() {
+    this.dispatchEvent({ type: "save" });
   }
 
   load(document: string) {
