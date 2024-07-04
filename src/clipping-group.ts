@@ -8,7 +8,7 @@ import {
 } from "three";
 import { firstClippingGroupLayer, lightsLayer } from "./layers";
 import { sceneMutationObserver } from "./tree-mutation-observer";
-import { isAncestor } from "./utils";
+import { ancestorInstancesOf, isAncestor } from "./utils";
 
 export const clippingGroups = new Set<ClippingGroup>();
 
@@ -59,13 +59,5 @@ sceneMutationObserver.addEventListener("removed", ({ object }) => {
   }
 });
 
-export const getContainingClippingGroup = (object: Object3D) => {
-  let current: Object3D | null = object;
-  while (current) {
-    if (current instanceof ClippingGroup) {
-      return current;
-    }
-    current = current.parent;
-  }
-  return null;
-};
+export const getContainingClippingGroup = (object: Object3D) =>
+  ancestorInstancesOf(object, ClippingGroup).next().value ?? null;
