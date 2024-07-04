@@ -581,7 +581,7 @@ export class RenderPlugin
   *ancestorsOf(element: Element) {
     let current = element;
     const root = this.view.dom;
-    while (current !== root) {
+    while (current && current !== root) {
       yield current;
       current = current.parentElement!;
     }
