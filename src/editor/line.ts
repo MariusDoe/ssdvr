@@ -24,9 +24,15 @@ export class Line extends Object3D {
     }
   }
 
+  persistentParent(): Object3D | undefined {
+    return this.plugin;
+  }
+
   isVisible(clippingGroup: ClippingGroup) {
     const { lineHeight, width } = this.plugin;
-    const worldPosition = this.plugin.localToWorld(this.position.clone());
+    const worldPosition =
+      this.persistentParent()?.localToWorld(this.position.clone()) ??
+      this.position.clone();
     const positions = [
       worldPosition,
       worldPosition.clone().add(new Vector3(width, 0, 0)),
@@ -39,7 +45,7 @@ export class Line extends Object3D {
   updateVisibility(clippingGroup: ClippingGroup) {
     if (this.isVisible(clippingGroup)) {
       if (!this.parent) {
-        this.plugin.add(this);
+        this.persistentParent()?.add(this);
         if (debug) console.log("showing line", this.element.textContent);
       }
     } else {

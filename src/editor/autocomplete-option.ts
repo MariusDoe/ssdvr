@@ -1,11 +1,6 @@
-import { Autocomplete } from "./autocomplete";
 import { Line } from "./line";
 
 export class AutocompleteOption extends Line {
-  updateVisibility() {
-    // do nothing
-  }
-
   updatePosition() {
     const index = [...this.element.parentElement!.children].indexOf(
       this.element
@@ -14,10 +9,14 @@ export class AutocompleteOption extends Line {
   }
 
   get autocomplete() {
-    return this.parent as Autocomplete | null;
+    return this.plugin.autocompleteController?.child;
   }
 
   getWidth() {
     return this.autocomplete?.width ?? 0;
+  }
+
+  persistentParent() {
+    return this.autocomplete;
   }
 }

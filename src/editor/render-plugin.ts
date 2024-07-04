@@ -20,8 +20,9 @@ import {
   onController,
 } from "../interaction";
 import { MovableController } from "../movable-controller";
+import { Scroller } from "../scroller";
 import { ScrollerController } from "../scroller-controller";
-import { Autocomplete } from "./autocomplete";
+import { Autocomplete, AutocompleteScrollerController } from "./autocomplete";
 import { AutocompleteOption } from "./autocomplete-option";
 import { AutocompleteTextSpan } from "./autocomplete-text-span";
 import { Editor } from "./editor";
@@ -58,7 +59,7 @@ export class RenderPlugin
   glyphAdvance: number;
   lineMap = new Map<Element, Line>();
   textSpanMap = new Map<Text, TextSpan>();
-  autocomplete: Autocomplete | null = null;
+  autocompleteController: AutocompleteScrollerController | null = null;
   autocompleteOptionMap = new Map<Element, AutocompleteOption>();
   autocompleteTextSpanMap = new Map<Text, AutocompleteTextSpan>();
   styleCache = new Map<Element, CSSStyleDeclaration>();
@@ -118,7 +119,7 @@ export class RenderPlugin
     });
     if (update.selectionSet) {
       this.updateSelections();
-      this.autocomplete?.updatePosition();
+      this.autocompleteController?.updatePosition();
       this.dispatchEvent({
         type: "mainSelectionChanged",
         selection: this.view.state.selection.main,
@@ -218,6 +219,9 @@ export class RenderPlugin
     switch (mutation.type) {
       case "attributes":
         this.updateStyle(mutation.target);
+        if (mutation.attributeName === "aria-selected") {
+          this.updateAutocompleteOptionSelection(mutation.target as Element);
+        }
         break;
       case "childList":
         for (const node of mutation.addedNodes) {
@@ -254,6 +258,17 @@ export class RenderPlugin
         this.styleUpdates.add(updatableMaterial);
       }
     });
+  }
+
+  updateAutocompleteOptionSelection(selected: Element) {
+    if (!this.autocompleteController || !selected.ariaSelected) {
+      return;
+    }
+    const option = this.autocompleteOptionMap.get(selected);
+    if (!option) {
+      return;
+    }
+    this.autocompleteController.optionSelected(option);
   }
 
   addNodesBelow(root: Node) {
@@ -327,14 +342,18 @@ export class RenderPlugin
   }
 
   addAutocomplete(element: Element) {
-    if (this.autocomplete) {
-      return this.autocomplete;
+    if (this.autocompleteController) {
+      return this.autocompleteController;
     }
     if (debug) console.log("adding autocomplete");
-    this.autocomplete = new Autocomplete(element, this);
-    this.add(this.autocomplete);
-    this.autocomplete.updatePosition();
-    return this.autocomplete;
+    const autocomplete = new Autocomplete(element, this);
+    this.autocompleteController = new AutocompleteScrollerController(
+      autocomplete
+    );
+    const scroller = new Scroller(0.1, this.autocompleteController);
+    this.add(scroller);
+    this.autocompleteController.updatePosition();
+    return this.autocompleteController;
   }
 
   addAutocompleteOption(element: Element) {
@@ -346,10 +365,10 @@ export class RenderPlugin
       return;
     }
     if (debug) console.log("adding autocomplete option", element.textContent);
-    const autocomplete = this.addAutocomplete(autocompleteElement);
+    const autocompleteController = this.addAutocomplete(autocompleteElement);
     const option = new AutocompleteOption(element, this);
     this.autocompleteOptionMap.set(element, option);
-    autocomplete.add(option);
+    autocompleteController.child.add(option);
     option.updateMaterial();
     this.autocompleteUpdate = true;
   }
@@ -430,15 +449,15 @@ export class RenderPlugin
   }
 
   removeAutocomplete(element: Element) {
-    if (!this.autocomplete) {
+    if (!this.autocompleteController) {
       return;
     }
-    if (this.autocomplete.element !== element) {
+    if (this.autocompleteController.child.element !== element) {
       return;
     }
     if (debug) console.log("removing autocomplete");
-    this.autocomplete.removeFromParent();
-    this.autocomplete = null;
+    this.autocompleteController.scroller.removeFromParent();
+    this.autocompleteController = null;
   }
 
   removeAutocompleteOption(element: Element) {
@@ -484,11 +503,11 @@ export class RenderPlugin
   }
 
   updateAutocomplete() {
-    if (!this.autocomplete) {
+    if (!this.autocompleteController) {
       return;
     }
-    this.autocomplete.updateWidth();
-    for (const option of this.autocomplete.children) {
+    this.autocompleteController.child.updateSize();
+    for (const option of this.autocompleteController.child.children) {
       if (option instanceof AutocompleteOption) {
         option.updatePosition();
         option.updateWidth();
