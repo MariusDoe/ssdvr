@@ -2,7 +2,7 @@ import { Object3D } from "three";
 import type { Scroller } from "./scroller";
 
 export abstract class ScrollerController<T extends Object3D = Object3D> {
-  _scroller?: Scroller;
+  private _scroller?: Scroller;
 
   constructor(public child: T) {}
 
