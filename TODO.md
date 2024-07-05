@@ -64,10 +64,8 @@ demo
   - look at origin always
 + file picker bug: after closing and reopening parent, cannot open children
 
-- benchmarkings
-  - same setup except for multi-pass & clipping
-  - without line clipping
-  - ...
+- open-rpc: open PR
+- codemirror-language-server: clone locally, maybe open issue
 
 - presentation
   - show live coding
@@ -79,3 +77,21 @@ demo
   - open in front of hands, not feet
   - demo colors, shading + lights
   - ground plane, surroundings
+
+  - problem motivieren
+  - demo
+  - discuss problems
+    - HMR
+    - editor performance maybe
+    - scroller (deep dive nicht so wertvoll)
+  - show/discuss self-sustainability
+  - limitations
+  - future work
+  - benchmarks
+    - same setup except for multi-pass & clipping
+    - without line clipping
+    - ...
+  - 20-25min
+
+- README with installation and start instructions
+- Documentation: how to use the tool (file picker, code editor, ...)
