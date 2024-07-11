@@ -12,7 +12,7 @@ import { materialFromColor } from "./materials";
 import { MovableController } from "./movable-controller";
 import { ScrollerController } from "./scroller-controller";
 
-const handleGeometry = new CylinderGeometry(0.01, 0.01);
+const handleGeometry = new CylinderGeometry(0.03, 0.03);
 const handleMaterial = materialFromColor("#888888");
 
 interface ScrollerEventMap extends Object3DEventMap {
