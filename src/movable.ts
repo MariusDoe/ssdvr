@@ -2,7 +2,6 @@ import {
   CapsuleGeometry,
   Color,
   Mesh,
-  MeshBasicMaterial,
   Object3D,
   Quaternion,
   Vector3,
@@ -10,15 +9,12 @@ import {
 import { Button } from "./button";
 import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
+import { materialFromColor } from "./materials";
 import { MovableController } from "./movable-controller";
 
 const handleGeometry = new CapsuleGeometry(0.1, 2);
-const handleMaterial = new MeshBasicMaterial({
-  color: new Color("white"),
-});
-const handleHoverMaterial = new MeshBasicMaterial({
-  color: new Color("lightblue"),
-});
+const handleMaterial = materialFromColor("white");
+const handleHoverMaterial = materialFromColor("lightblue");
 
 export class Movable extends Object3D {
   handle!: Mesh;
