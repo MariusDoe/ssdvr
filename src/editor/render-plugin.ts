@@ -180,8 +180,12 @@ export class RenderPlugin
     }
   }
 
+  get minWidth() {
+    return 0.5 * this.glyphAdvance;
+  }
+
   getWidth() {
-    let width = 0;
+    let width = this.minWidth;
     for (const line of this.view.state.doc.iterLines()) {
       width = Math.max(width, line.length);
     }
