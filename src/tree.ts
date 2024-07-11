@@ -10,6 +10,7 @@ import { Font } from "three/examples/jsm/Addons.js";
 import { getCharacterMesh, measure } from "./editor/fonts";
 import { onController } from "./interaction";
 import { MovableController } from "./movable-controller";
+import { ScrollerController } from "./scroller-controller";
 
 export type TreeOptions = {
   size: number;
@@ -27,6 +28,7 @@ export class Tree extends Object3D<TreeEventMap> {
   parentTree?: Tree;
   entry: TreeEntry;
   childTrees: Tree[] = [];
+  width: number;
   height: number;
   options: TreeOptions;
 
@@ -37,6 +39,7 @@ export class Tree extends Object3D<TreeEventMap> {
     onController("select", this.entry.background, "single", () => {
       this.click();
     });
+    this.width = this.entry.width;
     this.height = this.entry.height;
     this.add(this.entry);
   }
@@ -59,10 +62,12 @@ export class Tree extends Object3D<TreeEventMap> {
   }
 
   updateLayout() {
+    this.width = this.entry.width;
     this.height = this.entry.height;
     for (const tree of this.childTrees) {
       tree.position.x = this.options.indent;
       tree.position.y = -this.height;
+      this.width = Math.max(this.width, this.options.indent + tree.width);
       this.height += tree.height;
     }
     this.parentTree?.updateLayout();
@@ -79,7 +84,18 @@ export class TreeMovableController extends MovableController<Tree> {
   }
 }
 
+export class TreeScrollerController extends ScrollerController<Tree> {
+  getHeight(): number {
+    return this.child.height;
+  }
+
+  getHandleXOffset(): number {
+    return this.child.width;
+  }
+}
+
 export class TreeEntry extends Object3D {
+  width: number;
   height: number;
   background: Mesh;
 
@@ -87,12 +103,12 @@ export class TreeEntry extends Object3D {
     super();
     const { lineHeight, glyphAdvance } = measure(options.font, options.size);
     this.height = lineHeight;
-    const width = content.length * glyphAdvance;
+    this.width = content.length * glyphAdvance;
     this.background = new Mesh(
-      new PlaneGeometry(width, lineHeight),
+      new PlaneGeometry(this.width, lineHeight),
       options.backgroundMaterial
     );
-    this.background.position.set(width / 2, -lineHeight / 2, -0.001);
+    this.background.position.set(this.width / 2, -lineHeight / 2, -0.001);
     this.add(this.background);
     for (let i = 0; i < content.length; i++) {
       const mesh = getCharacterMesh(

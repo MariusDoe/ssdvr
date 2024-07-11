@@ -7,9 +7,9 @@ import { fontFromFlags } from "./editor/fonts";
 import { FilePicker } from "./file-picker";
 import { preserve } from "./hmr/preserve";
 import { materialFromColor } from "./materials";
-import { openInMovable } from "./open";
+import { openInMovable, openInMovableScroller } from "./open";
 import "./scene";
-import { TreeMovableController } from "./tree";
+import { TreeScrollerController } from "./tree";
 import "./vr";
 import { Workspace } from "./workspace";
 
@@ -21,7 +21,7 @@ preserve("file-picker", () => {
     backgroundMaterial: materialFromColor("darkblue"),
     foregroundMaterial: materialFromColor("white"),
   });
-  openInMovable(filePicker, TreeMovableController);
+  openInMovableScroller(filePicker, 1, TreeScrollerController);
   return filePicker;
 });
 
