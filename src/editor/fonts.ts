@@ -4,12 +4,18 @@ import consolasBoldItalicUrl from "../../fonts/Consolas_Bold Italic.json?url";
 import consolasBoldUrl from "../../fonts/Consolas_Bold.json?url";
 import consolasItalicUrl from "../../fonts/Consolas_Italic.json?url";
 import consolasUrl from "../../fonts/Consolas_Regular.json?url";
+import { preserveOnce } from "../hmr/preserve";
 
 const fontLoader = new FontLoader();
 
-export const fonts = await Promise.all(
-  [consolasUrl, consolasBoldUrl, consolasItalicUrl, consolasBoldItalicUrl].map(
-    (url) => fontLoader.loadAsync(url)
+export const fonts = await preserveOnce("fonts", () =>
+  Promise.all(
+    [
+      consolasUrl,
+      consolasBoldUrl,
+      consolasItalicUrl,
+      consolasBoldItalicUrl,
+    ].map((url) => fontLoader.loadAsync(url))
   )
 );
 
@@ -37,7 +43,10 @@ export const measure = (font: Font, size = 1) => {
   return { lineHeight, glyphAdvance };
 };
 
-const fontCharacterCache = new Map<Font, Map<string, BufferGeometry>>();
+const fontCharacterCache = preserveOnce(
+  "fontCharacterCache",
+  () => new Map<Font, Map<string, BufferGeometry>>()
+);
 
 const getCharacterCache = (font: Font) => {
   if (!fontCharacterCache.has(font)) {

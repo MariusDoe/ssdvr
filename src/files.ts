@@ -4,11 +4,12 @@ import type {
   RequestName,
   Response,
 } from "../plugins/files";
+import { preserveOnce } from "./hmr/preserve";
 
-const pendingRequests = new Map<
-  string,
-  PromiseWithResolvers<OkResponse<RequestName>>
->();
+const pendingRequests = preserveOnce(
+  "pendingRequests",
+  () => new Map<string, PromiseWithResolvers<OkResponse<RequestName>>>()
+);
 const requestNames = ["files:read", "files:list"] as const;
 
 for (const name of requestNames) {

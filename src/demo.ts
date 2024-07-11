@@ -7,10 +7,9 @@ import {
   PointLight,
   SphereGeometry,
 } from "three";
-import { preserve } from "./hmr/preserve";
+import { preserveOnce } from "./hmr/preserve";
 import { ZeroOffsetMovableController } from "./movable-controller";
 import { openInMovable } from "./open";
-import { scene } from "./scene";
 import { TickContext } from "./tick";
 
 class SolarSystem extends Object3D {
@@ -73,14 +72,12 @@ class Planet extends Body {
   }
 }
 
-preserve("solarSystem", () => {
+preserveOnce("solarSystem", () => {
   const solarSystem = new SolarSystem();
   openInMovable(solarSystem, ZeroOffsetMovableController).position.set(
     0,
     0,
     -5
   );
-  (window as any).solarSystem = solarSystem;
-  (window as any).scene = scene;
   return solarSystem;
 });

@@ -1,4 +1,5 @@
 import { Clock, Object3D } from "three";
+import { preserveOnce } from "./hmr/preserve";
 
 export type TickContext = {
   delta: number;
@@ -14,7 +15,7 @@ declare module "three" {
   }
 }
 
-const clock = new Clock();
+const clock = preserveOnce("clock", () => new Clock());
 
 export const tickAll = (scene: Object3D) => {
   const context = {

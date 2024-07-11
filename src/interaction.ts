@@ -1,5 +1,7 @@
 import { Intersection, Object3D, Raycaster } from "three";
 import { Controller, controllers } from "./controllers";
+import { useEventListener } from "./dispose-hooks";
+import { preserveOnce } from "./hmr/preserve";
 import { sceneMutationObserver } from "./tree-mutation-observer";
 import { isAncestor } from "./utils";
 
@@ -83,14 +85,21 @@ type IntersectionOptions = {
   recurse: boolean;
 };
 
-const listeners = Object.fromEntries(
-  interactionEvents.map((event) => [
-    event,
-    [] as Listener<InteractionMode, InteractionEvent>[],
-  ])
-) as Record<InteractionEvent, Listener<InteractionMode, InteractionEvent>[]>;
+const listeners = preserveOnce(
+  "listeners",
+  () =>
+    Object.fromEntries(
+      interactionEvents.map((event) => [
+        event,
+        [] as Listener<InteractionMode, InteractionEvent>[],
+      ])
+    ) as Record<InteractionEvent, Listener<InteractionMode, InteractionEvent>[]>
+);
 
-const objects = new Map<Object3D, IntersectionOptions>();
+const objects = preserveOnce(
+  "objects",
+  () => new Map<Object3D, IntersectionOptions>()
+);
 
 const mergeIntersectionOptions = (
   a: IntersectionOptions,
@@ -151,7 +160,10 @@ export const onController = <
 const raycaster = new Raycaster();
 raycaster.layers.enableAll();
 
-const hoveredObjects = new Map<Controller, Object3D>();
+const hoveredObjects = preserveOnce(
+  "hoveredObjects",
+  () => new Map<Controller, Object3D>()
+);
 
 const dispatchObjectEvent = <Event extends InteractionEvent>(
   object: Object3D,
@@ -257,7 +269,7 @@ for (const controller of controllers) {
   };
 
   for (const event of controllerEvents) {
-    hand.addEventListener(event, () => {
+    useEventListener(hand, event, () => {
       fireEvent(event);
     });
   }

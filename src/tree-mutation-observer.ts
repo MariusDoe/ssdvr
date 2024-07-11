@@ -4,6 +4,7 @@ import {
   Object3D,
   Object3DEventMap,
 } from "three";
+import { preserveOnce } from "./hmr/preserve";
 import { scene } from "./scene";
 
 interface TreeMutationObserverEventMap {
@@ -95,4 +96,7 @@ export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEv
   }
 }
 
-export const sceneMutationObserver = new TreeMutationObserver(scene);
+export const sceneMutationObserver = preserveOnce(
+  "instance",
+  () => new TreeMutationObserver(scene)
+);

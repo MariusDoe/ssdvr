@@ -6,11 +6,16 @@ import {
   Plane,
   Vector3,
 } from "three";
+import { useEventListener } from "./dispose-hooks";
+import { preserveOnce } from "./hmr/preserve";
 import { firstClippingGroupLayer, lightsLayer } from "./layers";
 import { sceneMutationObserver } from "./tree-mutation-observer";
 import { ancestorInstancesOf } from "./utils";
 
-export const clippingGroups = new Set<ClippingGroup>();
+export const clippingGroups = preserveOnce(
+  "clippingGroups",
+  () => new Set<ClippingGroup>()
+);
 
 const nextClippingGroupLayer = () => {
   const layers = new Set([...clippingGroups].map((group) => group.layer));
@@ -68,7 +73,7 @@ export class ClippingGroup<
   }
 }
 
-sceneMutationObserver.addEventListener("added", ({ object }) => {
+useEventListener(sceneMutationObserver, "added", ({ object }) => {
   if (object instanceof Light) {
     object.layers.enable(lightsLayer);
     return;
@@ -93,7 +98,7 @@ sceneMutationObserver.addEventListener("added", ({ object }) => {
   }
   object.layers.set(containingClippingGroup.layer);
 });
-sceneMutationObserver.addEventListener("removed", ({ object }) => {
+useEventListener(sceneMutationObserver, "removed", ({ object }) => {
   if (object instanceof ClippingGroup) {
     object.nestedClippingGroups = [];
     (object.ancestorClippingPlanes as Plane[]).splice(0, Infinity);

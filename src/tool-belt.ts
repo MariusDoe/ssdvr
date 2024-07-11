@@ -1,5 +1,5 @@
 import { Object3D, Vector3 } from "three";
-import { preserve } from "./hmr/preserve";
+import { preserveOnce } from "./hmr/preserve";
 import { camera } from "./renderer";
 import { scene } from "./scene";
 
@@ -34,7 +34,7 @@ export class ToolBelt extends Object3D {
   }
 }
 
-export const toolBelt = preserve("instance", () => {
+export const toolBelt = preserveOnce("toolBelt", () => {
   const instance = new ToolBelt();
   scene.add(instance);
   return instance;

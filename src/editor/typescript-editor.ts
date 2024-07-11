@@ -2,9 +2,13 @@ import { javascript } from "@codemirror/lang-javascript";
 import { StateEffect } from "@codemirror/state";
 import { WebSocketTransport } from "@open-rpc/client-js";
 import { languageServerWithTransport } from "codemirror-languageserver";
+import { preserveOnce } from "../hmr/preserve";
 import { FileEditor } from "./file-editor";
 
-const languageServerTransport = new WebSocketTransport("ws://localhost:9999");
+const languageServerTransport = preserveOnce(
+  "languageServerTransport",
+  () => new WebSocketTransport("ws://localhost:9999")
+);
 
 export class TypeScriptEditor extends FileEditor {
   constructor(path: string) {
