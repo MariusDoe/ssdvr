@@ -77,6 +77,9 @@ demo
   - open in front of hands, not feet
   - demo colors, shading + lights
   - ground plane, surroundings
+  - explode editor (show 3D)
+  - increase z offset of completion
+  - Squeak workspace (do it, ...)
 
   - problem motivieren
   - demo
