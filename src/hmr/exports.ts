@@ -1,4 +1,5 @@
 import { ModuleNamespace } from "vite/types/hot.js";
+import { updateMostRecentURL } from "./most-recent-url";
 import { ProxifiedObject, proxifyObject } from "./proxy-object";
 import { Registry, updateRegistry } from "./registry";
 import { Module } from "./running-module";
@@ -11,6 +12,7 @@ const pendingExportsUpdates = new WeakMap<
 >();
 
 export const registerModule = (module: Module) => {
+  updateMostRecentURL(module);
   import(module.url).then((namespace) => {
     if (pendingExportsUpdates.has(namespace)) {
       (
