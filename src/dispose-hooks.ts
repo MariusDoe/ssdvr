@@ -27,7 +27,7 @@ export const useEventListener = <
   });
 };
 
-export const useAdd = (parent: Object3D, child: Object3D) => {
-  parent.add(child);
-  onDispose(() => parent.remove(child));
+export const useAdd = (parent: Object3D, ...children: Object3D[]) => {
+  parent.add(...children);
+  onDispose(() => parent.remove(...children));
 };
