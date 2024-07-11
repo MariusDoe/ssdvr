@@ -13,6 +13,7 @@
     - current option: `Font.generateShapes`, inspired by [example](https://threejs.org/examples/?q=font#webgl_geometry_text_shapes)
   - optimizations:
     - character geometry cache
+- MutationObserver to keep THREE.js for unchanged parts
 
 # Changing Files on Disk
 - vite has file watcher, writes will trigger HMR

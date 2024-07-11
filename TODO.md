@@ -11,10 +11,10 @@
 + import.meta.hot primitives: use Proxies
 + hot reloading in VR (read/write + CodeMirror editor)
 
-- fancier interactions with CodeMirror
++ fancier interactions with CodeMirror
 - potentially use Logitech K380 keyboard passthrough
 
-- ticks: subclassing erstmal ok, wenn gebraucht: events hinzufügen
++ ticks: subclassing erstmal ok, wenn gebraucht: events hinzufügen
 
 slides: goals
 - most basic way to input text
@@ -22,9 +22,9 @@ slides: goals
 - build infrastructure on top
 
 demo
-- increase font size
-- VSCode + scrcpy
-- drastischere effekte (planeten stop / go, etc.)
++ increase font size
++ VSCode + scrcpy
++ drastischere effekte (planeten stop / go, etc.)
 
 + write down things
 + cursor interactions
@@ -52,8 +52,8 @@ demo
 + custom mutation observer by recursively listening for childadded/childremoved
 - dragging inertia?
 - Star Wars: use the force
-- Editor optimization
-  - check whether parent is Scrollable
++ Editor optimization
+  + check whether parent is Scrollable
   + check for cursor movements only
 - name for movables
 - movable rotation modes via button in handle
@@ -71,15 +71,15 @@ demo
   - show live coding
     - spawn breadcrumbs of planets
     - show velocity vectors as simple lines
-    - light inside of sun
-    - primitive button that toggles room light
-  - open file picker in Scroller
-  - open in front of hands, not feet
-  - demo colors, shading + lights
-  - ground plane, surroundings
+    + light inside of sun
+    + primitive button that toggles room light
+  + open file picker in Scroller
+  + open in front of hands, not feet
+  + demo colors, shading + lights
+  + ground plane, surroundings
   - explode editor (show 3D)
-  - increase z offset of completion
-  - Squeak workspace (do it, ...)
+  + increase z offset of completion
+  + Squeak workspace (do it, ...)
 
   - problem motivieren
   - demo
