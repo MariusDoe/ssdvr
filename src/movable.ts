@@ -5,9 +5,9 @@ import {
   MeshBasicMaterial,
   Object3D,
   Quaternion,
-  SphereGeometry,
   Vector3,
 } from "three";
+import { Button } from "./button";
 import { DragContext, createDraggable } from "./draggable";
 import { onController } from "./interaction";
 import { MovableController } from "./movable-controller";
@@ -19,14 +19,10 @@ const handleMaterial = new MeshBasicMaterial({
 const handleHoverMaterial = new MeshBasicMaterial({
   color: new Color("lightblue"),
 });
-const removeButtonGeometry = new SphereGeometry(0.1);
-const removeButtonMaterial = new MeshBasicMaterial({
-  color: new Color("red"),
-});
 
 export class Movable extends Object3D {
   handle!: Mesh;
-  removeButton!: Mesh;
+  removeButton!: Button;
 
   constructor(public controller: MovableController) {
     super();
@@ -66,17 +62,16 @@ export class Movable extends Object3D {
   }
 
   initialiseRemoveButton() {
-    this.removeButton = new Mesh(removeButtonGeometry, removeButtonMaterial);
+    this.removeButton = new Button(new Color("red"), () => {
+      this.removeFromParent();
+    });
     this.add(this.removeButton);
     this.removeButton.position.x = -(
       handleGeometry.parameters.length / 2 +
       handleGeometry.parameters.radius +
-      removeButtonGeometry.parameters.radius * 1.5
+      this.removeButton.radius * 1.5
     );
-    this.removeButton.position.y = -removeButtonGeometry.parameters.radius;
-    onController("select", this.removeButton, "recurse", () => {
-      this.removeFromParent();
-    });
+    this.removeButton.position.y = -this.removeButton.radius;
   }
 
   tick() {
