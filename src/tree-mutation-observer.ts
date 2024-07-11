@@ -17,18 +17,18 @@ type ObjectListeners = {
   [Event in Events]?: EventListener<Object3DEventMap[Event], Event, Object3D>;
 };
 
-export type Watcher<T> = {
-  added: (watched: Object3D) => T;
-  removed: (watched: Object3D, value: T) => void;
+export type Watcher<T extends Object3D, V> = {
+  added: (watched: T) => V;
+  removed: (watched: T, value: V) => void;
 };
 
-export type WatcherWithValue<T> = Watcher<T> & {
-  value: T;
+export type WatcherWithValue<T extends Object3D, V> = Watcher<T, V> & {
+  value: V;
 };
 
 export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEventMap> {
   inTree = new Map<Object3D, ObjectListeners>();
-  watchers = new WeakMap<Object3D, WatcherWithValue<unknown>[]>();
+  watchers = new WeakMap<Object3D, WatcherWithValue<Object3D, unknown>[]>();
 
   constructor(root: Object3D) {
     super();
@@ -85,12 +85,12 @@ export class TreeMutationObserver extends EventDispatcher<TreeMutationObserverEv
     });
   }
 
-  watch<T>(object: Object3D, watcher: Watcher<T>) {
+  watch<T extends Object3D, V>(object: T, watcher: Watcher<T, V>) {
     const watchers = this.watchers.get(object) ?? [];
-    watchers.push(watcher as WatcherWithValue<unknown>);
+    watchers.push(watcher as WatcherWithValue<Object3D, unknown>);
     this.watchers.set(object, watchers);
     if (this.inTree.has(object)) {
-      (watcher as WatcherWithValue<T>).value = watcher.added(object);
+      (watcher as WatcherWithValue<T, V>).value = watcher.added(object);
     }
   }
 }
