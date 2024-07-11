@@ -1,4 +1,4 @@
-import { BufferGeometry, Material, Mesh, ShapeGeometry } from "three";
+import { BufferGeometry, Material, Mesh, Shape, ShapeGeometry } from "three";
 import { Font, FontLoader } from "three/examples/jsm/Addons.js";
 import consolasBoldItalicUrl from "../../fonts/Consolas_Bold Italic.json?url";
 import consolasBoldUrl from "../../fonts/Consolas_Bold.json?url";
@@ -60,12 +60,25 @@ export const getCharacterGeometry = (font: Font, character: string) => {
   if (cache.has(character)) {
     return cache.get(character)!;
   }
-  const shapes = font.generateShapes(character, 1);
-  for (const shape of shapes) {
-    // fixup shapes so triangulation doesn't break for weird holes arrays
-    if (shape.holes.length === 1 && shape.holes[0].curves.length === 0) {
-      shape.holes = [];
+  let shapes: Shape[];
+  try {
+    shapes = font.generateShapes(character, 1);
+    for (const shape of shapes) {
+      // fixup shapes so triangulation doesn't break for weird holes arrays
+      if (shape.holes.length === 1 && shape.holes[0].curves.length === 0) {
+        shape.holes = [];
+      }
     }
+  } catch (e) {
+    console.warn(
+      "could not create a geometry for character",
+      character,
+      "in font",
+      font,
+      "- error:"
+    );
+    console.error(e);
+    shapes = [];
   }
   const geometry = new ShapeGeometry(shapes, 3);
   cache.set(character, geometry);
