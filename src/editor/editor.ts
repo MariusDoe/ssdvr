@@ -3,6 +3,7 @@ import { EditorView, basicSetup } from "codemirror";
 import { Object3D, Object3DEventMap } from "three";
 import { ForwardingMovableController } from "../movable-controller";
 import { ForwardingScrollerController } from "../scroller-controller";
+import { sceneMutationObserver } from "../tree-mutation-observer";
 import {
   RenderPlugin,
   RenderPluginMovableController,
@@ -22,8 +23,16 @@ export class Editor extends Object3D<EditorEventMap> {
     super();
     this.view = new EditorView({
       doc: initialDocument,
-      parent: document.body,
       extensions: [...this.getExtensions()],
+    });
+    sceneMutationObserver.watch(this, {
+      added({ view }) {
+        document.body.appendChild(view.dom);
+        view.focus(); // trigger rerender
+      },
+      removed({ view }) {
+        view.dom.remove();
+      },
     });
   }
 
