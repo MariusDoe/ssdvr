@@ -1,6 +1,7 @@
-import { Object3D } from "three";
+import { Object3D, Vector3 } from "three";
 import { Movable } from "./movable";
 import { MovableController } from "./movable-controller";
+import { camera } from "./renderer";
 import { scene } from "./scene";
 import { Scroller, ScrollerMovableController } from "./scroller";
 import { ScrollerController } from "./scroller-controller";
@@ -12,6 +13,7 @@ export const openInMovable = <T extends Object3D>(
   const controller = new controllerClass(object);
   const movable = new Movable(controller);
   scene.add(movable);
+  movable.position.copy(camera.localToWorld(new Vector3(0, 0, -1)));
   return movable;
 };
 
