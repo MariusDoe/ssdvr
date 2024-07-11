@@ -3,6 +3,7 @@ import { getContainingClippingGroup } from "./clipping-group";
 import { Controller, controllers } from "./controllers";
 import { useEventListener } from "./dispose-hooks";
 import { preserveOnce } from "./hmr/preserve";
+import { scene } from "./scene";
 import { sceneMutationObserver } from "./tree-mutation-observer";
 import { isAncestor } from "./utils";
 
@@ -182,10 +183,64 @@ const dispatchObjectEvent = <Event extends InteractionEvent>(
   }
 };
 
+const pendingSelections = preserveOnce(
+  "nextSelected",
+  () =>
+    [] as {
+      waitForHit: boolean;
+      resolve: (object: Object3D | null) => void;
+    }[]
+);
+
+export const getNextSelected = <WaitForHit extends boolean>(
+  waitForHit: WaitForHit
+): Promise<WaitForHit extends true ? Object3D : Object3D | null> => {
+  const { promise, resolve } =
+    Promise.withResolvers<
+      WaitForHit extends true ? Object3D : Object3D | null
+    >();
+  pendingSelections.push({
+    waitForHit,
+    resolve: resolve as (object: Object3D | null) => void,
+  });
+  return promise;
+};
+
+const handleNextSelected = () => {
+  if (pendingSelections.length === 0) {
+    return;
+  }
+  const { waitForHit, resolve } = pendingSelections[0];
+  const intersection = raycaster
+    .intersectObject(scene, true)
+    .find(
+      (intersection) =>
+        !controllers.some(
+          (controller) =>
+            isAncestor(controller.hand, intersection.object) ||
+            isAncestor(controller.grip, intersection.object)
+        )
+    );
+  if (!intersection) {
+    if (!waitForHit) {
+      resolve(null);
+      pendingSelections.shift();
+    }
+    return;
+  }
+  resolve(intersection.object);
+  pendingSelections.shift();
+};
+
 for (const controller of controllers) {
   const { hand } = controller;
 
   const fireEvent = (event: InteractionEvent) => {
+    if (event === "select" && pendingSelections.length > 0) {
+      handleNextSelected();
+      return;
+    }
+
     const eventListeners = listeners[event];
 
     for (const { handler, mode } of eventListeners) {
