@@ -1,4 +1,5 @@
 import { Intersection, Object3D, Raycaster } from "three";
+import { getContainingClippingGroup } from "./clipping-group";
 import { Controller, controllers } from "./controllers";
 import { useEventListener } from "./dispose-hooks";
 import { preserveOnce } from "./hmr/preserve";
@@ -213,14 +214,27 @@ for (const controller of controllers) {
     const raycasts = Array.from(objects.entries())
       .map(([object, options]) => ({
         object,
-        intersections: raycaster.intersectObject(object, options.recurse),
+        firstIntersection: raycaster
+          .intersectObject(object, options.recurse)
+          .find((intersection) => {
+            const clippingGroup = getContainingClippingGroup(
+              intersection.object
+            );
+            if (!clippingGroup) {
+              return true;
+            }
+            return !clippingGroup.isClipped(intersection.point);
+          }),
       }))
-      .filter(({ intersections }) => intersections.length > 0);
+      .filter(
+        (hit): hit is typeof hit & { firstIntersection: Intersection } =>
+          !!hit.firstIntersection
+      );
     const minDistance = Math.min(
-      ...raycasts.map(({ intersections }) => intersections[0].distance)
+      ...raycasts.map(({ firstIntersection }) => firstIntersection.distance)
     );
     const firstHit = raycasts.find(
-      ({ intersections }) => intersections[0].distance === minDistance
+      ({ firstIntersection }) => firstIntersection.distance === minDistance
     );
 
     const oldHoveredObject = hoveredObjects.get(controller);
@@ -258,12 +272,12 @@ for (const controller of controllers) {
     }
 
     if (firstHit) {
-      const { object, intersections } = firstHit;
+      const { object, firstIntersection } = firstHit;
       dispatchObjectEvent(object, intersectionListeners, {
         event,
         object,
         controller,
-        intersection: intersections[0],
+        intersection: firstIntersection,
       });
     }
   };
