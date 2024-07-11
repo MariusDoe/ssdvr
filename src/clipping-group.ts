@@ -67,7 +67,7 @@ export class ClippingGroup<
   }
 
   isClipped(worldPosition: Vector3) {
-    return this.clippingPlanes.some(
+    return this.ancestorClippingPlanes.some(
       (plane) => plane.normal.dot(worldPosition) < -plane.constant
     );
   }
