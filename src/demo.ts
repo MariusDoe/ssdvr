@@ -1,8 +1,10 @@
 import {
   Color,
+  Material,
   Mesh,
-  MeshBasicMaterial,
+  MeshPhysicalMaterial,
   Object3D,
+  PointLight,
   SphereGeometry,
 } from "three";
 import { preserve } from "./hmr/preserve";
@@ -14,7 +16,7 @@ import { TickContext } from "./tick";
 class SolarSystem extends Object3D {
   constructor() {
     super();
-    const sun = new Body();
+    const sun = new Sun();
     this.add(sun);
     for (let i = 0; i < 3; i++) {
       sun.add(new Planet(i + 1));
@@ -22,14 +24,21 @@ class SolarSystem extends Object3D {
   }
 }
 
+const sphereGeometry = new SphereGeometry();
+
 class Body extends Mesh {
+  constructor(material: Material) {
+    super(sphereGeometry, material);
+  }
+}
+
+class Sun extends Body {
   constructor() {
-    super(
-      new SphereGeometry(),
-      new MeshBasicMaterial({
-        color: new Color(1, 0, 0),
-      })
-    );
+    const material = new MeshPhysicalMaterial({
+      emissive: new Color(0.8, 1, 0.5),
+    });
+    super(material);
+    this.add(new PointLight(material.color, 10));
   }
 }
 
@@ -37,7 +46,11 @@ class Planet extends Body {
   angle = 0;
 
   constructor(private index: number) {
-    super();
+    super(
+      new MeshPhysicalMaterial({
+        color: new Color(Math.random(), Math.random(), Math.random()),
+      })
+    );
   }
 
   get distance() {
