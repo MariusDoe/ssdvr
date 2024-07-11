@@ -13,7 +13,7 @@ const pendingExportsUpdates = new WeakMap<
 
 export const registerModule = (module: Module) => {
   updateMostRecentURL(module);
-  import(module.url).then((namespace) => {
+  import(/* @vite-ignore */ module.url).then((namespace) => {
     if (pendingExportsUpdates.has(namespace)) {
       (
         pendingExportsUpdates.get(namespace) as PromiseWithResolvers<Module>
