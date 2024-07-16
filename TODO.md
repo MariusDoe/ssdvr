@@ -67,6 +67,9 @@ demo
 - open-rpc: open PR
 - codemirror-language-server: clone locally, maybe open issue
 
+- Movable lookAt camera
+- Text class
+
 - presentation
   - show live coding
     - spawn breadcrumbs of planets
@@ -77,6 +80,7 @@ demo
   + open in front of hands, not feet
   + demo colors, shading + lights
   + ground plane, surroundings
+  - demo: show steps as large text
   - explode editor (show 3D)
   + increase z offset of completion
   + Squeak workspace (do it, ...)
