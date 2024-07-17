@@ -3,7 +3,8 @@ import { Font } from "three/examples/jsm/Addons.js";
 import { TextMesh, fontFromStyle, getTextMesh } from "./fonts";
 import { Line } from "./line";
 import { foregroundMaterialFromStyle } from "./materials";
-import { RenderPlugin, debug, planeGeometry } from "./render-plugin";
+import type { RenderPlugin } from "./render-plugin";
+import { debug, planeGeometry, zOrder } from "./shared";
 
 export class TextSpan extends Object3D {
   font!: Font;
@@ -84,7 +85,7 @@ export class TextSpan extends Object3D {
         const { lineHeight } = this.plugin;
         this.background.scale.y = lineHeight;
         this.background.position.y = -lineHeight / 2;
-        this.background.position.z = -RenderPlugin.zOrder;
+        this.background.position.z = -zOrder;
         this.add(this.background);
         this.updateBackgroundWidth();
       }

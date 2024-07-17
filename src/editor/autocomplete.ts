@@ -1,7 +1,8 @@
 import { Object3D } from "three";
 import { ScrollerController } from "../scroller-controller";
 import { AutocompleteOption } from "./autocomplete-option";
-import { RenderPlugin } from "./render-plugin";
+import type { RenderPlugin } from "./render-plugin";
+import { zOrder } from "./shared";
 
 export class Autocomplete extends Object3D {
   width = 0;
@@ -9,7 +10,7 @@ export class Autocomplete extends Object3D {
 
   constructor(public element: Element, public plugin: RenderPlugin) {
     super();
-    this.position.z = 3 * RenderPlugin.zOrder;
+    this.position.z = 3 * zOrder;
   }
 
   updateSize() {

@@ -1,6 +1,7 @@
 import { Mesh, Object3D, Vector3 } from "three";
 import { ClippingGroup, getContainingClippingGroup } from "../clipping-group";
-import { RenderPlugin, debug, planeGeometry } from "./render-plugin";
+import type { RenderPlugin } from "./render-plugin";
+import { debug, planeGeometry, zOrder } from "./shared";
 import { TextSpan } from "./text-span";
 
 export class Line extends Object3D {
@@ -12,7 +13,7 @@ export class Line extends Object3D {
     this.background = new Mesh(planeGeometry);
     this.background.scale.y = lineHeight;
     this.background.position.y = -lineHeight / 2;
-    this.background.position.z = -2 * RenderPlugin.zOrder;
+    this.background.position.z = -2 * zOrder;
     this.add(this.background);
     this.updatePosition();
     this.updateWidth();

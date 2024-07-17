@@ -5,13 +5,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import {
-  Mesh,
-  Object3D,
-  Object3DEventMap,
-  PlaneGeometry,
-  Vector3,
-} from "three";
+import { Mesh, Object3D, Object3DEventMap, Vector3 } from "three";
 import { clamp } from "three/src/math/MathUtils.js";
 import { ClippingGroup } from "../clipping-group";
 import {
@@ -30,13 +24,12 @@ import { fonts, measure } from "./fonts";
 import { Line } from "./line";
 import { backgroundMaterialFromStyles } from "./materials";
 import { SelectionSpan } from "./selection-span";
+import { debug, planeGeometry } from "./shared";
 import { TextSpan } from "./text-span";
 
 interface Options {
   size: number;
 }
-
-export const planeGeometry = new PlaneGeometry();
 
 interface RenderPluginEventMap extends Object3DEventMap {
   mainSelectionChanged: {
@@ -47,8 +40,6 @@ interface RenderPluginEventMap extends Object3DEventMap {
 interface UpdatableMaterial {
   updateMaterial(): void;
 }
-
-export const debug = false;
 
 export class RenderPlugin
   extends Object3D<RenderPluginEventMap>
@@ -74,8 +65,6 @@ export class RenderPlugin
   linesToUpdate = new Set<Line>();
   styleUpdates = new Set<UpdatableMaterial>();
   interactionMesh: Mesh;
-
-  static zOrder = 0.001;
 
   constructor(public view: EditorView, public options: Options) {
     super();
