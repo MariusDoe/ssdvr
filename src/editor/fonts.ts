@@ -48,21 +48,21 @@ const fontCharacterCache = preserveOnce(
   () => new Map<Font, Map<string, BufferGeometry>>()
 );
 
-const getCharacterCache = (font: Font) => {
+const getTextCache = (font: Font) => {
   if (!fontCharacterCache.has(font)) {
     fontCharacterCache.set(font, new Map());
   }
   return fontCharacterCache.get(font)!;
 };
 
-export const getCharacterGeometry = (font: Font, character: string) => {
-  const cache = getCharacterCache(font);
-  if (cache.has(character)) {
-    return cache.get(character)!;
+export const getTextGeometry = (font: Font, text: string) => {
+  const cache = getTextCache(font);
+  if (cache.has(text)) {
+    return cache.get(text)!;
   }
   let shapes: Shape[];
   try {
-    shapes = font.generateShapes(character, 1);
+    shapes = font.generateShapes(text, 1);
     for (const shape of shapes) {
       // fixup shapes so triangulation doesn't break for weird holes arrays
       if (shape.holes.length === 1 && shape.holes[0].curves.length === 0) {
@@ -71,8 +71,8 @@ export const getCharacterGeometry = (font: Font, character: string) => {
     }
   } catch (e) {
     console.warn(
-      "could not create a geometry for character",
-      character,
+      "could not create a geometry for text",
+      text,
       "in font",
       font,
       "- error:"
@@ -81,26 +81,26 @@ export const getCharacterGeometry = (font: Font, character: string) => {
     shapes = [];
   }
   const geometry = new ShapeGeometry(shapes, 3);
-  cache.set(character, geometry);
+  cache.set(text, geometry);
   return geometry;
 };
 
-export const getCharacterMesh = (
+export const getTextMesh = (
   font: Font,
   character: string,
   material: Material,
   size = 1
 ) => {
-  const geometry = getCharacterGeometry(font, character);
-  const mesh = new CharacterMesh(font, character, geometry, material);
+  const geometry = getTextGeometry(font, character);
+  const mesh = new TextMesh(font, character, geometry, material);
   mesh.scale.setScalar(size);
   return mesh;
 };
 
-export class CharacterMesh extends Mesh {
+export class TextMesh extends Mesh {
   constructor(
     public font: Font,
-    public character: string,
+    public text: string,
     geometry: BufferGeometry,
     material: Material
   ) {

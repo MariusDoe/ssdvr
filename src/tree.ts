@@ -7,7 +7,7 @@ import {
   Vector3,
 } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
-import { getCharacterMesh, measure } from "./editor/fonts";
+import { getTextMesh, measure } from "./editor/fonts";
 import { onController } from "./interaction";
 import { MovableController } from "./movable-controller";
 import { ScrollerController } from "./scroller-controller";
@@ -110,16 +110,13 @@ export class TreeEntry extends Object3D {
     );
     this.background.position.set(this.width / 2, -lineHeight / 2, -0.001);
     this.add(this.background);
-    for (let i = 0; i < content.length; i++) {
-      const mesh = getCharacterMesh(
-        options.font,
-        content[i],
-        options.foregroundMaterial,
-        options.size
-      );
-      mesh.position.x = i * glyphAdvance;
-      mesh.position.y = -lineHeight * (3 / 4);
-      this.add(mesh);
-    }
+    const mesh = getTextMesh(
+      options.font,
+      content,
+      options.foregroundMaterial,
+      options.size
+    );
+    mesh.position.y = -lineHeight * (3 / 4);
+    this.add(mesh);
   }
 }

@@ -1,15 +1,16 @@
 import { Material, Mesh, Object3D } from "three";
 import { Font } from "three/examples/jsm/Addons.js";
-import { CharacterMesh, fontFromStyle, getCharacterMesh } from "./fonts";
+import { TextMesh, fontFromStyle, getTextMesh } from "./fonts";
 import { Line } from "./line";
 import { foregroundMaterialFromStyle } from "./materials";
 import { RenderPlugin, debug, planeGeometry } from "./render-plugin";
 
 export class TextSpan extends Object3D {
-  characters: CharacterMesh[] = [];
   font!: Font;
   foregroundMaterial!: Material;
   background: Mesh | null = null;
+  lastTextLength = -1;
+  mesh?: TextMesh;
 
   constructor(public node: Text, public plugin: RenderPlugin) {
     super();
@@ -26,36 +27,19 @@ export class TextSpan extends Object3D {
   updateText() {
     const text = this.node.textContent ?? "";
     if (debug) console.log("updating span", text);
-    const unused = this.characters.slice();
-    if (text.length !== unused.length) {
+    if (text.length !== this.lastTextLength) {
       this.widthChanged();
     }
-    for (let i = 0; i < text.length; i++) {
-      const character = text[i];
-      const index = unused.findIndex((mesh) => mesh.character === character);
-      let mesh: CharacterMesh;
-      if (index >= 0) {
-        [mesh] = unused.splice(index, 1);
-      } else {
-        mesh = getCharacterMesh(
-          this.font,
-          character,
-          this.foregroundMaterial,
-          this.plugin.options.size
-        );
-        this.add(mesh);
-        this.characters.push(mesh);
-        mesh.position.y = -this.plugin.lineHeight * (3 / 4);
-      }
-      mesh.position.x = i * this.plugin.glyphAdvance;
-    }
-    for (const character of unused) {
-      this.remove(character);
-    }
-    this.characters = this.characters.filter(
-      (character) => !unused.includes(character)
+    this.lastTextLength = text.length;
+    this.mesh?.removeFromParent();
+    this.mesh = getTextMesh(
+      this.font,
+      text,
+      this.foregroundMaterial,
+      this.plugin.options.size
     );
-    this.updateBackgroundWidth();
+    this.mesh.position.y = -this.plugin.lineHeight * (3 / 4);
+    this.add(this.mesh);
   }
 
   widthChanged() {
@@ -71,16 +55,14 @@ export class TextSpan extends Object3D {
     const style = this.plugin.styleFor(this.node.parentElement!);
     const material = foregroundMaterialFromStyle(style);
     const font = fontFromStyle(style);
-    if (font !== this.font) {
+    if (!this.mesh || font !== this.font) {
       this.font = font;
       this.foregroundMaterial = material;
       this.clear();
       this.updateText();
     } else if (material !== this.foregroundMaterial) {
       this.foregroundMaterial = material;
-      for (const child of this.characters) {
-        child.material = material;
-      }
+      this.mesh.material = material;
     }
   }
 
@@ -118,7 +100,7 @@ export class TextSpan extends Object3D {
     if (!this.background) {
       return;
     }
-    const width = this.characters.length * this.plugin.glyphAdvance;
+    const width = this.lastTextLength * this.plugin.glyphAdvance;
     this.background.scale.x = width;
     this.background.position.x = width / 2;
   }
