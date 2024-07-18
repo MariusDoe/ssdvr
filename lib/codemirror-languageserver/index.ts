@@ -550,12 +550,6 @@ export function languageServerWithTransport(options: LanguageServerOptions) {
             trigKind = CompletionTriggerKind.TriggerCharacter;
             trigChar = line.text[pos - line.from - 1];
           }
-          if (
-            trigKind === CompletionTriggerKind.Invoked &&
-            !context.matchBefore(/\w+$/)
-          ) {
-            return null;
-          }
           return await plugin.requestCompletion(
             context,
             offsetToPos(state.doc, pos),
