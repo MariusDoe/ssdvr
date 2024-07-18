@@ -322,7 +322,11 @@ export function hmr(): Plugin {
   return {
     name: "hmr",
     async transform(originalCode, id) {
-      if (!jsFiles.test(id) || id.includes(hmrModulesDirectory)) {
+      if (
+        !jsFiles.test(id) ||
+        id.includes(hmrModulesDirectory) ||
+        !id.includes("/src/")
+      ) {
         return;
       }
       const { code, map } = await babel.transformAsync(originalCode, {
