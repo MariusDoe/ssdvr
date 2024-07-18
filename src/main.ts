@@ -11,6 +11,7 @@ import uvTextureUrl from "../textures/uv_grid_opengl.jpg?url";
 import { Button } from "./button";
 import "./controllers";
 import "./demo";
+import { SolarSystem } from "./demo";
 import { useAdd } from "./dispose-hooks";
 import "./editor/editor";
 import { EditorMovableController } from "./editor/editor";
@@ -18,6 +19,7 @@ import { fontFromFlags } from "./editor/fonts";
 import { FilePicker } from "./file-picker";
 import { preserveOnce } from "./hmr/preserve";
 import { materialFromColor } from "./materials";
+import { ZeroOffsetMovableController } from "./movable-controller";
 import { openInMovable, openInMovableScroller } from "./open";
 import "./scene";
 import { scene } from "./scene";
@@ -68,6 +70,10 @@ preserveOnce("toolbelt", () => {
     new Button("Workspace", new Color("gray"), () => {
       const workspace = new Workspace();
       openInMovable(workspace, "Workspace", EditorMovableController);
+    }),
+    new Button("Solar System", new Color("yellow"), () => {
+      const solarSystem = new SolarSystem();
+      openInMovable(solarSystem, "Solar System", ZeroOffsetMovableController);
     }),
   ];
   toolBelt.add(...buttons);

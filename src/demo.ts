@@ -7,9 +7,6 @@ import {
   PointLight,
   SphereGeometry,
 } from "three";
-import { preserveOnce } from "./hmr/preserve";
-import { ZeroOffsetMovableController } from "./movable-controller";
-import { openInMovable } from "./open";
 import { TickContext } from "./tick";
 
 export class SolarSystem extends Object3D {
@@ -71,13 +68,3 @@ class Planet extends Body {
     this.scale.setScalar(this.size);
   }
 }
-
-preserveOnce("solarSystem", () => {
-  const solarSystem = new SolarSystem();
-  openInMovable(
-    solarSystem,
-    "Solar System",
-    ZeroOffsetMovableController
-  ).position.set(0, 0, -5);
-  return solarSystem;
-});
