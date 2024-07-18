@@ -5,6 +5,7 @@ import consolasBoldUrl from "../../fonts/Consolas_Bold.json?url";
 import consolasItalicUrl from "../../fonts/Consolas_Italic.json?url";
 import consolasUrl from "../../fonts/Consolas_Regular.json?url";
 import { preserveOnce } from "../hmr/preserve";
+import { materialFromColor } from "../materials";
 
 const fontLoader = new FontLoader();
 
@@ -26,6 +27,8 @@ export const fontFromFlags = ({
   bold: boolean;
   italic: boolean;
 }) => fonts[(+italic << 1) | +bold];
+
+export const defaultFont = fontFromFlags({ bold: false, italic: false });
 
 export const fontFromStyle = (style: CSSStyleDeclaration) =>
   fontFromFlags({
@@ -85,14 +88,26 @@ export const getTextGeometry = (font: Font, text: string) => {
   return geometry;
 };
 
+export const defaultMaterial = materialFromColor("white");
+
+export const defaultSize = 1;
+
 export const getTextMesh = (
-  font: Font,
-  character: string,
-  material: Material,
-  size = 1
+  text: string,
+  options?: {
+    font?: Font;
+    material?: Material;
+    size?: number;
+  }
 ) => {
-  const geometry = getTextGeometry(font, character);
-  const mesh = new TextMesh(font, character, geometry, material);
+  const { font, material, size } = {
+    font: defaultFont,
+    material: defaultMaterial,
+    size: defaultSize,
+    ...options,
+  };
+  const geometry = getTextGeometry(font, text);
+  const mesh = new TextMesh(font, text, geometry, material);
   mesh.scale.setScalar(size);
   return mesh;
 };

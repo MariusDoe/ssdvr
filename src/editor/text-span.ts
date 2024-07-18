@@ -33,12 +33,11 @@ export class TextSpan extends Object3D {
     }
     this.lastTextLength = text.length;
     this.mesh?.removeFromParent();
-    this.mesh = getTextMesh(
-      this.font,
-      text,
-      this.foregroundMaterial,
-      this.plugin.options.size
-    );
+    this.mesh = getTextMesh(text, {
+      font: this.font,
+      material: this.foregroundMaterial,
+      size: this.plugin.options.size,
+    });
     this.mesh.position.y = -this.plugin.lineHeight * (3 / 4);
     this.add(this.mesh);
   }

@@ -110,12 +110,11 @@ export class TreeEntry extends Object3D {
     );
     this.background.position.set(this.width / 2, -lineHeight / 2, -0.001);
     this.add(this.background);
-    const mesh = getTextMesh(
-      options.font,
-      content,
-      options.foregroundMaterial,
-      options.size
-    );
+    const mesh = getTextMesh(content, {
+      font: options.font,
+      material: options.foregroundMaterial,
+      size: options.size,
+    });
     mesh.position.y = -lineHeight * (3 / 4);
     this.add(mesh);
   }
