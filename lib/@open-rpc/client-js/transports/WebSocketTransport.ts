@@ -21,11 +21,15 @@ class WebSocketTransport extends Transport {
   }
   public connect(): Promise<void> {
     return new Promise<void>((resolve) => {
-      const cb = () => {
-        this.connection.removeEventListener("open", cb);
+      if (this.connection.readyState === WebSocket.OPEN) {
         resolve();
-      };
-      this.connection.addEventListener("open", cb);
+      } else {
+        const cb = () => {
+          this.connection.removeEventListener("open", cb);
+          resolve();
+        };
+        this.connection.addEventListener("open", cb);
+      }
       this.connection.addEventListener(
         "message",
         (message: { data: string }) => {
