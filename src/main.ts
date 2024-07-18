@@ -37,18 +37,8 @@ const floor = new Mesh(
   new MeshPhysicalMaterial({ map: uvTexture })
 );
 floor.rotateX(-Math.PI / 2);
-const light = new AmbientLight(new Color("white"));
-let lightOn = true;
-const updateLight = () => {
-  light.intensity = lightOn ? 0.8 : 0.1;
-};
-updateLight();
-const lightSwitch = new Button("Light switch", new Color("yellow"), () => {
-  lightOn = !lightOn;
-  updateLight();
-});
-lightSwitch.position.set(1, 1, -1);
-useAdd(scene, floor, light, lightSwitch);
+const light = new AmbientLight(new Color("white"), 0.8);
+useAdd(scene, floor, light);
 
 preserveOnce("toolbelt", () => {
   const buttons = [
