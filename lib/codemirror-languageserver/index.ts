@@ -395,7 +395,8 @@ class LanguageServerPlugin implements PluginValue {
           sortText?: string;
           apply: string;
         } = {
-          label,
+          label: filterText ?? label,
+          displayLabel: label,
           detail,
           apply: textEdit?.newText ?? label,
           type: kind && CompletionItemKindMap[kind].toLowerCase(),
