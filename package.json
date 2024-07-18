@@ -24,7 +24,6 @@
     "codemirror-languageserver": "^1.11.0",
     "core-js": "^3.37.1",
     "events": "^3.3.0",
-    "html2canvas": "^1.4.1",
     "three": "^0.163.0",
     "typescript-language-server": "^4.3.3"
   }
