@@ -1,7 +1,7 @@
 import { javascript } from "@codemirror/lang-javascript";
 import { StateEffect } from "@codemirror/state";
-import { WebSocketTransport } from "@open-rpc/client-js";
-import { languageServerWithTransport } from "codemirror-languageserver";
+import WebSocketTransport from "../../lib/@open-rpc/client-js/transports/WebSocketTransport";
+import { languageServerWithTransport } from "../../lib/codemirror-languageserver";
 import { preserveOnce } from "../hmr/preserve";
 import { FileEditor } from "./file-editor";
 
