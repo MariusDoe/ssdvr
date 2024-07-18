@@ -72,7 +72,7 @@ export class Movable extends Object3D {
 
   initializeRemoveButton() {
     this.addButton(
-      new Button(new Color("red"), () => {
+      new Button("Close", new Color("red"), () => {
         this.removeFromParent();
       }),
       -1
@@ -81,7 +81,7 @@ export class Movable extends Object3D {
 
   initializeMinimizeButton() {
     this.addButton(
-      new Button(new Color("lightblue"), () => {
+      new Button("Minimize", new Color("lightblue"), () => {
         this.minimize();
       }),
       1
@@ -94,10 +94,14 @@ export class Movable extends Object3D {
       return;
     }
     this.removeFromParent();
-    const maximizeButton = new Button(new Color("lightblue"), () => {
-      maximizeButton.removeFromParent();
-      parent.add(this);
-    });
+    const maximizeButton = new Button(
+      "Maximize",
+      new Color("lightblue"),
+      () => {
+        maximizeButton.removeFromParent();
+        parent.add(this);
+      }
+    );
     toolBelt.add(maximizeButton);
   }
 

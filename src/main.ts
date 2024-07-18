@@ -41,7 +41,7 @@ const updateLight = () => {
   light.intensity = lightOn ? 0.8 : 0.1;
 };
 updateLight();
-const lightSwitch = new Button(new Color("yellow"), () => {
+const lightSwitch = new Button("Light switch", new Color("yellow"), () => {
   lightOn = !lightOn;
   updateLight();
 });
@@ -50,7 +50,7 @@ useAdd(scene, floor, light, lightSwitch);
 
 preserveOnce("toolbelt", () => {
   const buttons = [
-    new Button(new Color("darkblue"), () => {
+    new Button("File Picker", new Color("darkblue"), () => {
       const filePicker = new FilePicker(".", {
         size: 0.1,
         indent: 0.1,
@@ -60,7 +60,7 @@ preserveOnce("toolbelt", () => {
       });
       openInMovableScroller(filePicker, 1, TreeScrollerController);
     }),
-    new Button(new Color("gray"), () => {
+    new Button("Workspace", new Color("gray"), () => {
       const workspace = new Workspace();
       openInMovable(workspace, EditorMovableController);
     }),
