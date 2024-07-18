@@ -12,7 +12,7 @@ import { ZeroOffsetMovableController } from "./movable-controller";
 import { openInMovable } from "./open";
 import { TickContext } from "./tick";
 
-class SolarSystem extends Object3D {
+export class SolarSystem extends Object3D {
   constructor() {
     super();
     const sun = new Sun();
@@ -74,10 +74,10 @@ class Planet extends Body {
 
 preserveOnce("solarSystem", () => {
   const solarSystem = new SolarSystem();
-  openInMovable(solarSystem, ZeroOffsetMovableController).position.set(
-    0,
-    0,
-    -5
-  );
+  openInMovable(
+    solarSystem,
+    "Solar System",
+    ZeroOffsetMovableController
+  ).position.set(0, 0, -5);
   return solarSystem;
 });

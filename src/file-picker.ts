@@ -41,7 +41,7 @@ class FileTree extends Tree {
     const editor = path.endsWith(".ts")
       ? new TypeScriptEditor(path)
       : new FileEditor(path);
-    openInMovableScroller(editor, 0.4, EditorScrollerController);
+    openInMovableScroller(editor, path, 0.4, EditorScrollerController);
   }
 
   async loadEntries() {

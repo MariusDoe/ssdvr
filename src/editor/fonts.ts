@@ -1,4 +1,11 @@
-import { BufferGeometry, Material, Mesh, Shape, ShapeGeometry } from "three";
+import {
+  BufferGeometry,
+  Material,
+  Mesh,
+  Shape,
+  ShapeGeometry,
+  Vector3,
+} from "three";
 import { Font, FontLoader } from "three/examples/jsm/Addons.js";
 import consolasBoldItalicUrl from "../../fonts/Consolas_Bold Italic.json?url";
 import consolasBoldUrl from "../../fonts/Consolas_Bold.json?url";
@@ -120,5 +127,11 @@ export class TextMesh extends Mesh {
     material: Material
   ) {
     super(geometry, material);
+  }
+
+  centerHorizontally() {
+    this.geometry.computeBoundingBox();
+    this.position.x -=
+      (this.geometry.boundingBox!.getSize(new Vector3()).x * this.scale.x) / 2;
   }
 }

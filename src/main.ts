@@ -58,11 +58,16 @@ preserveOnce("toolbelt", () => {
         backgroundMaterial: materialFromColor("darkblue"),
         foregroundMaterial: materialFromColor("white"),
       });
-      openInMovableScroller(filePicker, 1, TreeScrollerController);
+      openInMovableScroller(
+        filePicker,
+        "File Picker",
+        1,
+        TreeScrollerController
+      );
     }),
     new Button("Workspace", new Color("gray"), () => {
       const workspace = new Workspace();
-      openInMovable(workspace, EditorMovableController);
+      openInMovable(workspace, "Workspace", EditorMovableController);
     }),
   ];
   toolBelt.add(...buttons);

@@ -1,4 +1,4 @@
-import { Color, Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from "three";
+import { Color, Mesh, MeshBasicMaterial, SphereGeometry } from "three";
 import { getTextMesh } from "./editor/fonts";
 import { onController } from "./interaction";
 import { camera } from "./renderer";
@@ -16,11 +16,7 @@ export class Button extends Mesh {
     const labelText = getTextMesh(label, { size: this.radius * 0.2 });
     this.add(labelText);
     labelText.position.z += this.radius * 1.1;
-    labelText.geometry.computeBoundingBox();
-    labelText.position.x -=
-      (labelText.geometry.boundingBox!.getSize(new Vector3()).x *
-        labelText.scale.x) /
-      2;
+    labelText.centerHorizontally();
     onController("select", this, "single", () => {
       onClick();
     });

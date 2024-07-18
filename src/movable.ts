@@ -8,20 +8,24 @@ import {
 } from "three";
 import { Button } from "./button";
 import { DragContext, createDraggable } from "./draggable";
+import { getTextMesh } from "./editor/fonts";
 import { onController } from "./interaction";
 import { materialFromColor } from "./materials";
 import { MovableController } from "./movable-controller";
 import { toolBelt } from "./tool-belt";
 
 const handleGeometry = new CapsuleGeometry(0.1, 2);
+handleGeometry.rotateZ(Math.PI / 2);
 const handleMaterial = materialFromColor("white");
+const nameMaterial = materialFromColor("black");
 const handleHoverMaterial = materialFromColor("lightblue");
 
 export class Movable extends Object3D {
   handle!: Mesh;
 
-  constructor(public controller: MovableController) {
+  constructor(name: string, public controller: MovableController) {
     super();
+    this.name = name;
     this.add(this.controller.child);
     this.initialiseHandle();
     this.initializeRemoveButton();
@@ -30,7 +34,6 @@ export class Movable extends Object3D {
 
   initialiseHandle() {
     this.handle = new Mesh(handleGeometry, handleMaterial);
-    this.handle.rotateZ(Math.PI / 2);
     this.handle.position.y = -handleGeometry.parameters.radius;
     this.add(this.handle);
     let dragging = false;
@@ -56,6 +59,10 @@ export class Movable extends Object3D {
       hovered = active.length > 0;
       updateMaterial();
     });
+    const label = getTextMesh(this.name, { material: nameMaterial, size: 0.1 });
+    this.handle.add(label);
+    label.position.z += handleGeometry.parameters.radius * 1.1;
+    label.centerHorizontally();
   }
 
   get handleWidth() {
@@ -94,14 +101,10 @@ export class Movable extends Object3D {
       return;
     }
     this.removeFromParent();
-    const maximizeButton = new Button(
-      "Maximize",
-      new Color("lightblue"),
-      () => {
-        maximizeButton.removeFromParent();
-        parent.add(this);
-      }
-    );
+    const maximizeButton = new Button(this.name, new Color("lightblue"), () => {
+      maximizeButton.removeFromParent();
+      parent.add(this);
+    });
     toolBelt.add(maximizeButton);
   }
 
